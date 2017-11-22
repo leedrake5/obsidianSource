@@ -2147,7 +2147,7 @@ choiceLines <- reactive({
           Country %in% input$selectcountry
           )
           
-          selectInput('selectstate', "Choose State/Provence", choices=unique(subset.state$State..or.the.like.), selected=unique(subset.state$State..or.the.like.)[1:2], multiple=TRUE)
+          selectInput('selectstate', "Choose State/Provence", choices=unique(subset.state$State..or.the.like.), selected=unique(subset.state$State..or.the.like.), multiple=TRUE)
       }else{
           p()
       }
@@ -2357,28 +2357,7 @@ yearSequence <- reactive({
       result.list
   })
   
-  output$sourcelistresults <- downloadHandler(
-  filename <- function(){
-      paste(input$projectname, "xlsx", sep=".")
-  },
-  
-  content = function(file) {
-      openxlsx::write.xlsx(obsidianSource(), file=file, colWidths = c(NA, "auto", "auto"))
 
-  }
-  )
-  
-  output$sourcelistresultsraw <- downloadHandler(
-  filename <- function(){
-      paste(input$projectname, "source", sep=".")
-  },
-  
-  content = function(file) {
-      saveRDS(obsidianSource(), file=file, compress="xz")
-      
-  }
-  )
-  
   prepMap <- reactive({
       
       region.data <- sourcePrep()
@@ -2395,20 +2374,62 @@ yearSequence <- reactive({
       
       
       
-      small.region.frame <- region.data[,c("Latitude", "Longitude", "Source.Common.Name")]
-      small.region.frame$Source <- make.names(small.region.frame$Source.Common.Name)
-      small.region.frame$Latitude <- as.numeric(as.character(small.region.frame$Latitude))
-      small.region.frame$Longitude <- as.numeric(as.character(small.region.frame$Longitude))
+      small.region.frame <- region.data[,c("Source.Common.Name", "Latitude", "Longitude")]
+      small.region.frame$Source.Common.Name <- make.names(small.region.frame$Source.Common.Name)
+      colnames(small.region.frame)[1] <- "Source"
+      small.region.frame$Latitude <- round(as.numeric(as.character(small.region.frame$Latitude)), 3)
+      small.region.frame$Longitude <- round(as.numeric(as.character(small.region.frame$Longitude)), 3)
+      
+      
+      small.region.frame$Description <- noquote(do.call(paste, c(region.data[,c("Geology", "Ethnominerology")], sep=" ")))
+      
+      
       
       for.maps <- merge(x=summary.frame, y=small.region.frame, by.x="Source", by.y="Source")
+      for.maps <- for.maps[order(-for.maps$Percent),]
+
       
-      data.frame(for.maps, col=NA_real_)
+      data.frame(for.maps)
       
   })
   
+  obsidianSourceResults <- reactive({
+      
+      result.list <- obsidianSource()
+      result.list[["Summary"]] <- prepMap()
+      result.list
+      
+  })
+  
+  output$sourcelistresults <- downloadHandler(
+  filename <- function(){
+      paste(input$projectname, "xlsx", sep=".")
+  },
+  
+  content = function(file) {
+      openxlsx::write.xlsx(obsidianSourceResults(), file=file, colWidths = c(NA, "auto", "auto"))
+      
+  }
+  )
+  
+  output$sourcelistresultsraw <- downloadHandler(
+  filename <- function(){
+      paste(input$projectname, "source", sep=".")
+  },
+  
+  content = function(file) {
+      saveRDS(obsidianSourceResults(), file=file, compress="xz")
+      
+  }
+  )
+  
+  
   output$summarytable <- renderDataTable({
       
-      data.table(prepMap())
+      data <- prepMap()
+      data$Percent <- percent(data$Percent)
+      
+      data.table(data)
       
   })
   

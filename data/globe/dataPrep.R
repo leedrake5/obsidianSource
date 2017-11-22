@@ -132,4 +132,4 @@ all.data <- merge(x=metadata, y=summary.data, by.x="Serial", by.y="Serial", all=
 all.data <- merge(x=all.data[,!(names(all.data)) %in% c("n.x", "n.y")], y=summary.n.dat, by.x="Serial", by.y="Serial", all=TRUE, sort=FALSE)
 rownames(all.data) <- all.data$Serial
 
-write.table(data.frame(all.data), file="data/globe/readydata.csv", sep=",")
+write.csv(all.data, file="data/globe/readydata.csv")

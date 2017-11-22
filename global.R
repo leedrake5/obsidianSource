@@ -28,8 +28,7 @@ library(scales)
 
 
 
-Hodder.v <- function(y)
-{
+Hodder.v <- function(y){
     
     n<-length(y)
     
@@ -3531,7 +3530,22 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
         treeJackKnifeOrigional <- function(time, tree.dataframe, tree.source) {
             
             tree.a <- tree.dataframe[match(time, tree.dataframe$Year, nomatch=0),]
-            tree.b <- tree.source[match(time, tree.source$Year, nomatch=0),]
+            tree.b<- tree.source[match(time, tree.source$Year, nomatch=0),]
+            
+            autoDivide <- function(vector) {
+                vector[1]/vector[2]
+            }
+            
+            #tree.a.ratios <- c(tree.a.first[,2], combn(tree.a.first[,2], 2, FUN=autoDivide))
+            #tree.b.ratios <- c(tree.b.first[,2], combn(tree.b.first[,2], 2, FUN=autoDivide))
+            
+            
+            #tree.a <- data.frame(seq(1, length(tree.a.ratios), 1), tree.a.ratios)
+            #colnames(tree.a) <- colnames(tree.a.first)
+            #tree.b <- data.frame(seq(1, length(tree.b.ratios), 1), tree.b.ratios)
+            #colnames(tree.b) <- colnames(tree.b.first)
+            
+            
             
             tree.a.mod <- tree.a[, colSums(is.na(tree.a)) != nrow(tree.a)]
             
@@ -3809,7 +3823,22 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
         treeJackKnifeOrigional <- function(time, tree.dataframe, tree.source) {
             
             tree.a <- tree.dataframe[match(time, tree.dataframe$Year, nomatch=0),]
-            tree.b <- tree.source[match(time, tree.source$Year, nomatch=0),]
+            tree.b<- tree.source[match(time, tree.source$Year, nomatch=0),]
+            
+            autoDivide <- function(vector) {
+                vector[1]/vector[2]
+            }
+            
+            #tree.a.ratios <- c(tree.a.first[,2], combn(tree.a.first[,2], 2, FUN=autoDivide))
+            #tree.b.ratios <- c(tree.b.first[,2], combn(tree.b.first[,2], 2, FUN=autoDivide))
+            
+            
+            #tree.a <- data.frame(seq(1, length(tree.a.ratios), 1), tree.a.ratios)
+            #colnames(tree.a) <- colnames(tree.a.first)
+            #tree.b <- data.frame(seq(1, length(tree.b.ratios), 1), tree.b.ratios)
+            #colnames(tree.b) <- colnames(tree.b.first)
+            
+            
             
             tree.a.mod <- tree.a[, colSums(is.na(tree.a)) != nrow(tree.a)]
             
