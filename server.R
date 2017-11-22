@@ -12,6 +12,7 @@ library(rhandsontable)
 library(random)
 library(Cairo)
 library(gghighlight)
+library(ggmap)
 
 
 
@@ -2298,137 +2299,6 @@ yearSequence <- reactive({
       
   })
   
-  deleteObsidianSource <- reactive({
-      Year <- yearSequence()
-      time <- Year
-      tree.dataframe <- sampleData()
-      tree.source.list <- sourceList()
-      if(input$bayesian==TRUE){tree.metadata <- values[["DF"]]}
-      if(input$bayesian==TRUE){source.metadata <- sourceMetadata()}
-      sensitivity <- input$sensitivity
-      
-      treeJackKnife <- function(time,  tree.dataframe, tree.source) {
-          
-          in_interval_value <- function(x, mean, sensitivity){
-              (mean-((mean*sensitivity))) < x & x < (mean+((mean*sensitivity)))
-          }
-          
-          in_interval_vector <- function(vector, mean, sensitivity){
-              year.s <- seq(1, length(vector), 1)
-              the.match <- sapply(year.s,  function(x) in_interval_value(vector[x], mean[x,2], sensitivity=sensitivity))
-              any(the.match)
-          }
-          
-          #test <- lapply(names(source.list), function(x) in_interval_vector(vector=tree.frame[,2], mean=source.list[[x]]))
-          
-          
-          tree.source.check <- in_interval_vector(vector=tree.dataframe[,2], mean=tree.source, sensitivity=sensitivity)
-          
-          
-          treeJackKnifeOrigional <- function(time, tree.dataframe, tree.source) {
-              
-              tree.a <- tree.dataframe[match(time, tree.dataframe$Year, nomatch=0),]
-              tree.b <- tree.source[match(time, tree.source$Year, nomatch=0),]
-              
-              tree.a.mod <- tree.a[, colSums(is.na(tree.a)) != nrow(tree.a)]
-              
-              samp.n <- length(names(tree.a.mod))
-              tree.names <- names(tree.a.mod[2:samp.n])
-              
-              tree.a.re <- tree.a.mod[tree.a.mod$Year %in% tree.b$Year, ]
-              tree.b.re <- tree.b[tree.b$Year %in% tree.a.mod$Year, ]
-              
-              tree.a.re.re <- tree.a.re[2:samp.n]
-              
-              source <- tree.b.re[,2]
-              
-              
-              n <- length(ls(tree.a.re))
-              
-              
-              group.lm.r2 <- apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(x~source))$r.squared))
-              group.lm.r2[group.lm.r2==1] <- .99999
-              
-              
-              group.lm.r <- sqrt(group.lm.r2)
-              
-              group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(x~source))$residuals)))
-              
-              group.t <- sqrt(group.lm.r2)*sqrt(group.lm.res.n-2)/sqrt(1-group.lm.r2)
-              
-              
-              result.frame <- data.frame(group.t, group.lm.r, group.lm.res.n)
-              colnames(result.frame) <- c("t-value", "r-value", "Sample Overlap")
-              return(format(result.frame, digits=3))
-          }
-          
-          null.frame <- data.frame(NA, NA ,NA)
-          colnames(null.frame) <- c("t-value", "r-value", "Sample Overlap")
-          
-          if(tree.source.check==TRUE){
-              return(treeJackKnifeOrigional(time=time, tree.dataframe=tree.dataframe, tree.source=tree.source))
-          }else if(tree.source.check==FALSE){
-              return(null.frame)
-          } else if(tree.source.check==NA){
-              return(null.frame)
-          }
-      }
-      
-      all.tree.names <- names(tree.dataframe)
-      all.tree.names <- all.tree.names[2:length(all.tree.names)]
-      
-      tree.subset <- subset(tree.dataframe, as.numeric(as.vector(Year)) < max(time))
-      tree.subset <- subset(tree.subset, as.numeric(as.vector(Year)) > min(time))
-      
-      tree.time <- tree.subset[colSums(!is.na(tree.subset)) > 0]
-      
-      tree.names <- names(tree.time)[2:length(tree.time)]
-      
-      
-      #cat(gettext(tree.names))
-      
-      source.name.list <- sapply(tree.source.list, names)
-      source.names <- source.name.list[2,]
-      source.names <- make.names(source.names, unique=TRUE)
-      
-      apply_treeJackKnife <- function(time, tree.dataframe, tree.source){
-          
-          temp.frame <- tree.dataframe[,-1]
-          
-          
-          temp.list <- apply(temp.frame, 2, function(x) list(as.vector(x)))
-          temp.list <- lapply(temp.list, "[[", 1)
-          temp.names <- colnames(temp.frame)
-          tree.list <- lapply(temp.list, function(x) data.frame(Year, x))
-          for(i in 1:length(tree.list)){
-              colnames(tree.list[[i]]) <- c("Year", temp.names[i])
-          }
-          
-          result.list <- lapply(tree.list, function(x) treeJackKnife(time=time, x, tree.source))
-          
-          result.frame <- do.call("rbind", result.list)
-          result.frame <- apply(result.frame, 2, as.numeric)
-          return(result.frame)
-      }
-      
-      
-      
-      #clusterExport(cl, library(parallel))
-      
-      Year <- time
-      all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife(time, tree.dataframe, tree.source.list[[x]]), cl=6L)
-      names(all.group.t) <- names(tree.source.list)
-      
-      all.group <- ldply (all.group.t, data.frame)
-      colnames(all.group) <- c("Source", "t-value", "r-value", "Sample Overlap")
-      all.group$Sample <- rep(names(tree.dataframe[,-1]), length(all.group.t))
-      
-      t.value <- reshape2::dcast(data=all.group, formula=Sample~Source, value.var="t-value", fun.aggregate=mean)[,-1]
-      rownames(t.value) <- names(tree.dataframe[,-1])
-      
-      all.group
-  })
-  
   
   
   
@@ -2508,6 +2378,142 @@ yearSequence <- reactive({
       
   }
   )
+  
+  prepMap <- reactive({
+      
+      region.data <- sourcePrep()
+      
+      summary.frame <- if(input$bayesian==TRUE){
+          as.data.frame(table(obsidianSource()[["Posterior Probabilities"]]["Source"]))
+      } else if(input$bayesian==FALSE){
+          as.data.frame(table(obsidianSource()[["T-Value"]]["Source"]))
+      }
+      
+      colnames(summary.frame) <- c("Source", "Total")
+      summary.frame$Percent <- summary.frame$Total/sum(summary.frame$Total)
+      
+      
+      
+      
+      small.region.frame <- region.data[,c("Latitude", "Longitude", "Source.Common.Name")]
+      small.region.frame$Source <- make.names(small.region.frame$Source.Common.Name)
+      small.region.frame$Latitude <- as.numeric(as.character(small.region.frame$Latitude))
+      small.region.frame$Longitude <- as.numeric(as.character(small.region.frame$Longitude))
+      
+      for.maps <- merge(x=summary.frame, y=small.region.frame, by.x="Source", by.y="Source")
+      
+      data.frame(for.maps, col=NA_real_)
+      
+  })
+  
+  output$summarytable <- renderDataTable({
+      
+      data.table(prepMap())
+      
+  })
+  
+  
+  sourceMap <- reactive({
+      
+      tree.metadata.frame <- values[["DF"]]
+      tree.metadata.frame$Latitude <- as.numeric(as.character(tree.metadata.frame$Latitude))
+      tree.metadata.frame$Longitude <- as.numeric(as.character(tree.metadata.frame$Longitude))
+      
+      for.maps <- prepMap()
+      
+      latmin <-  as.numeric(as.character(if(input$adjustcoordinates==TRUE){
+          input$latminmap
+      }else if(input$adjustcoordinates==FALSE){
+          min(for.maps$Latitude)
+      }))
+      
+      latmax <-  as.numeric(as.character(if(input$adjustcoordinates==TRUE){
+          input$latmaxmap
+      }else if(input$adjustcoordinates==FALSE){
+          max(for.maps$Latitude)
+      }))
+      
+      longmin <-  as.numeric(as.character(if(input$adjustcoordinates==TRUE){
+          input$lonminmap
+      }else if(input$adjustcoordinates==FALSE){
+          min(for.maps$Longitude)
+      }))
+      
+      longmax <-  as.numeric(as.character(if(input$adjustcoordinates==TRUE){
+          input$lonmaxmap
+      }else if(input$adjustcoordinates==FALSE){
+          max(for.maps$Longitude)
+      }))
+      
+      source.area <- get_map(location=c(lon=weighted.mean(for.maps$Longitude, n=for.maps$Total), lat=weighted.mean(for.maps$Latitude, n=for.maps.total)), zoom=5, maptype="terrain")
+      
+      test.map <- ggmap(source.area) +
+      geom_rect(xmin=-180, xmax=180, ymin=-90, ymax=90, alpha=0.1, fill="white")+
+      geom_point(data=for.maps, aes(x=Longitude, y=Latitude, size=Percent*3), shape=13) +
+      geom_point(data=for.maps, aes(x=Longitude, y=Latitude, colour=Source, size=Percent*3), alpha=0.7) +
+      geom_point(data=tree.metadata.frame, aes(x=Longitude, y=Latitude), shape=17) +
+      scale_y_continuous("Latitude", limits=c(latmin, latmax)) +
+      scale_x_continuous("Longitude", limits=c(longmin, longmax)) +
+      #scale_shape_manual("Source", values=1:nlevels(as.factor(for.maps$Source))) +
+      guides(size=FALSE) +
+      coord_equal() +
+      theme_classic()
+      test.map
+      
+      
+  })
+  
+  
+  
+  output$minlatmap <- renderUI({
+      if(input$adjustcoordinates==TRUE){
+          numericInput('latminmap', "Latitude Minimum", min=-90, max=90, step=.1, value=min(prepMap()$Latitude))
+      }else{
+          p()
+      }
+  })
+  
+  output$maxlatmap <- renderUI({
+      if(input$adjustcoordinates==TRUE){
+          numericInput('latmaxmap', "Latitude Maximum", min=-90, max=90, step=.1, value=max(prepMap()$Latitude))
+      }else{
+          p()
+      }
+  })
+  
+  output$minlongmap <- renderUI({
+      if(input$adjustcoordinates==TRUE){
+          numericInput('lonminmap', "Longitude Minimum", min=-180, max=180, step=.1, value=min(prepMap()$Longitude))
+      }else{
+          p()
+      }
+  })
+  
+  
+  output$maxlongmap <- renderUI({
+      if(input$adjustcoordinates==TRUE){
+          numericInput('lonmaxmap', "Longitude Maximum", min=-180, max=180, step=.1, value=max(prepMap()$Longitude))
+      }else{
+          p()
+      }
+  })
+  
+  
+  output$sourcedMap <- renderPlot({
+      
+      sourceMap()
+      
+  })
+  
+  
+  output$downloadsourcemap <- downloadHandler(
+  filename = function() { paste(paste(c(input$projectname, "_", "Map"), collapse=''), '.tiff',  sep='') },
+  content = function(file) {
+      ggsave(file,sourceMap(), device="tiff", compression="lzw", type="cairo",  dpi=300, width=12, height=7)
+  }
+  )
+  
+  
   
   
   dataMerge3 <- reactive({

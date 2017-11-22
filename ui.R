@@ -252,9 +252,18 @@ fluidRow(
 sidebarLayout(
 
 sidebarPanel(
-downloadButton('downloadsourcedfinal', label = "Download"),
-downloadButton('sourcelistresults', "Excel Results"),
-downloadButton('sourcelistresultsraw', "Raw Results")
+downloadButton('sourcelistresults', "Excel"),
+downloadButton('sourcelistresultsraw', "Raw"),
+downloadButton('downloadsourcemap', "Map"),
+
+tags$hr(),
+
+checkboxInput('adjustcoordinates', "Adjust Map", value=FALSE),
+uiOutput('minlatmap'),
+uiOutput('maxlatmap'),
+uiOutput('minlongmap'),
+uiOutput('maxlongmap'),
+tags$hr()
 
 
 ),
@@ -262,7 +271,9 @@ downloadButton('sourcelistresultsraw', "Raw Results")
 mainPanel(
 tabsetPanel(
 id = 'dataset',
-tabPanel('Sourced Artifacts', dataTableOutput('sourcedTable'))
+tabPanel('Summary Table', dataTableOutput('summarytable')),
+tabPanel('Sourced Artifacts', dataTableOutput('sourcedTable')),
+tabPanel('Source Map', plotOutput('sourcedMap'))
 ))))),
 
 tabPanel("PCA",
