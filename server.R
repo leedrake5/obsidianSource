@@ -1773,8 +1773,12 @@ print(plotInput())
              data.names.pass.4 <- gsub("*.L.beta", "", data.names.pass.3)
              data.names.pass.5 <- gsub("*.K12", "", data.names.pass.4)
              data.names.pass.6 <- gsub("*.L1", "", data.names.pass.5)
+             data.names.pass.7 <- gsub("*Ka1", "", data.names.pass.6)
+             data.names.pass.8 <- gsub("*La1", "", data.names.pass.7)
+             data.names.pass.9 <- gsub("*Lb1", "", data.names.pass.8)
 
-             colnames(data) <- data.names.pass.6
+
+             colnames(data) <- data.names.pass.9
              data
          })
          
@@ -2263,6 +2267,8 @@ yearSequence <- reactive({
       source.metadata
   })
   
+
+  
   sourceLength <- reactive({
       
       length(sourceList())
@@ -2383,6 +2389,8 @@ yearSequence <- reactive({
       
       small.region.frame$Description <- noquote(do.call(paste, c(region.data[,c("Geology", "Ethnominerology")], sep=" ")))
       
+      small.region.frame$References <- noquote(region.data$Bibliographies)
+      
       
       
       for.maps <- merge(x=summary.frame, y=small.region.frame, by.x="Source", by.y="Source")
@@ -2429,7 +2437,7 @@ yearSequence <- reactive({
       data <- prepMap()
       data$Percent <- percent(data$Percent)
       
-      data.table(data)
+      data.table(data[,c("Source", "Total", "Percent", "Latitude", "Longitude", "Description")])
       
   })
   
@@ -2557,34 +2565,102 @@ yearSequence <- reactive({
       
   })
   
+  output$pcaellipsesources <- renderUI({
+
+      if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          selectInput('pcasources', label="Sources to Plot", choices=names(sourceList()), selected=prepMap()$Source, multiple=TRUE)
+      }else{
+          p()
+      }
+      
+  })
+  
+  
+  
+  
+  sourceDefinitions <- reactive({
+      
+      region.data <- sourcePrep()
+      
+      short.source <- region.data[, c("Source.Common.Name", paste0("Mean", input$show_vars), paste0("SD", input$show_vars))]
+      colnames(short.source)[1] <- "Sources"
+      short.source$Sources <- make.names(short.source$Sources, unique=TRUE)
+
+      
+      #shorter.source <- dplyr::filter(short.source,
+      #Sources %in% input$pcasources)
+      
+      
+
+      
+      source.sim.list <- pblapply(input$pcasources, function(x) source.replicate(source=x, data=short.source, elements=input$show_vars))
+      
+      source.sim.frame <- as.data.frame(do.call("rbind", source.sim.list))
+      source.sim.frame
+      
+  })
+  
   
 
   #####PCA Analysis
   
+
+  
   xrfKReactive <- reactive({
-      
-      spectra.line.table <- dataMerge3()
-     
-      xrf.pca.frame <- spectra.line.table[,input$show_vars]
-      xrf.pca.frame <- xrf.pca.frame[complete.cases(xrf.pca.frame),]
-      
+         spectra.line.table <- dataMerge3()
+         
+         xrf.pca.frame <- spectra.line.table[,input$show_vars]
+         xrf.pca.frame <- xrf.pca.frame[complete.cases(xrf.pca.frame),]
+         xrf.pca <- prcomp(xrf.pca.frame, scale.=FALSE)
+         xrf.k <- kmeans(xrf.pca.frame, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
 
-      
-      xrf.k <- kmeans(xrf.pca.frame, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
-      xrf.pca <- prcomp(xrf.pca.frame, scale.=FALSE)
-      
-      xrf.scores <- as.data.frame(xrf.pca$x)
-      
-      cluster.frame <- data.frame(spectra.line.table$Sample, spectra.line.table$Source, xrf.k$cluster, xrf.scores)
-      
-      colnames(cluster.frame) <- c("Assay", "Source", "Cluster", names(xrf.scores))
-      
-      cluster.frame
+         xrf.scores <- as.data.frame(xrf.pca$x)
 
+        cluster.frame <- data.frame(spectra.line.table$Sample, spectra.line.table$Source, xrf.k$cluster, xrf.scores)
 
-
+        colnames(cluster.frame) <- c("Assay", "Source", "Cluster", names(xrf.scores))
+      
+  
+          cluster.frame
+      
+      
   })
   
+  
+  xrfkReactivePrep <- reactive({
+      
+      spectra.line.table <- dataMerge3()
+      spectra.line.table <- spectra.line.table[,c("Sample", "Source", input$show_vars)]
+      spectra.line.table$Type <- rep("Sample", length(spectra.line.table[,1]))
+      
+      simulation.table <- sourceDefinitions()
+      simulation.table <- simulation.table[,c("Source", input$show_vars)]
+      simulation.table$Sample <- simulation.table$Source
+      simulation.table$Type <- rep("Simulation", length(simulation.table[,1]))
+      
+      spectra.line.table.sim <- rbind(spectra.line.table, simulation.table)
+      
+      
+      xrf.pca.frame.sim <- spectra.line.table.sim[,input$show_vars]
+      xrf.pca.frame.sim <- xrf.pca.frame.sim[complete.cases(xrf.pca.frame.sim),]
+      
+      
+      xrf.k.sim <- kmeans(xrf.pca.frame.sim, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
+      xrf.pca.sim <- prcomp(xrf.pca.frame.sim, scale.=FALSE)
+      
+      xrf.scores.sim <- as.data.frame(xrf.pca.sim$x)
+      
+      cluster.frame.sim <- data.frame(spectra.line.table.sim$Sample, spectra.line.table.sim$Source, spectra.line.table.sim$Type, xrf.k.sim$cluster, xrf.scores.sim)
+      
+      colnames(cluster.frame.sim) <- c("Assay", "Source", "Type", "Cluster", names(xrf.scores.sim))
+      
+      cluster.list <- list(xrfKReactive(), cluster.frame.sim, spectra.line.table.sim)
+      names(cluster.list) <- c("Samples", "Simulations", "RawSimulations")
+      
+      cluster.list
+      
+      
+  })
 
   
   xrfPCAReactive <- reactive({
@@ -2607,19 +2683,26 @@ yearSequence <- reactive({
       xrf.pca.results
   })
   
+  
+
+  
 
   
   xMinPCA <- reactive({
       
-      spectra.line.table <- dataMerge3()
+      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["RawSimulations"]]
+      }else{
+          dataMerge3()
+      }
       
+      
+      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["Simulations"]]
+        }else{
+          xrfKReactive()
+        }
 
-      
-      
-      xrf.pca.results <- xrfKReactive()
-      
-      xrf.k <- xrfKReactive()
-      
       spectra.line.table$Cluster <- xrf.k$Cluster
       spectra.line.table$PC1 <- xrf.k$PC1
       spectra.line.table$PC2 <- xrf.k$PC2
@@ -2633,20 +2716,22 @@ yearSequence <- reactive({
   
   xMaxPCA <- reactive({
       
-      spectra.line.table <- dataMerge3()
+      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["RawSimulations"]]
+      }else{
+          dataMerge3()
+      }
       
+      
+      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["Simulations"]]
+      }else{
+          xrfKReactive()
+      }
 
-      
-      
-      xrf.pca.results <- xrfKReactive()
-      
-      xrf.k <- xrfKReactive()
-      
       spectra.line.table$Cluster <- xrf.k$Cluster
       spectra.line.table$PC1 <- xrf.k$PC1
       spectra.line.table$PC2 <- xrf.k$PC2
-      
-      quality.table <-qualityTable()
       
      
       
@@ -2659,14 +2744,19 @@ yearSequence <- reactive({
   
   yMinPCA <- reactive({
       
-      spectra.line.table <- dataMerge3()
-      quality.table <-qualityTable()
+      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["RawSimulations"]]
+      }else{
+          dataMerge3()
+      }
       
-     
-      xrf.pca.results <- xrfKReactive()
       
-      xrf.k <- xrfKReactive()
-      
+      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["Simulations"]]
+      }else{
+          xrfKReactive()
+      }
+
       spectra.line.table$Cluster <- xrf.k$Cluster
       spectra.line.table$PC1 <- xrf.k$PC1
       spectra.line.table$PC2 <- xrf.k$PC2
@@ -2679,14 +2769,19 @@ yearSequence <- reactive({
   
   yMaxPCA <- reactive({
       
-      spectra.line.table <- dataMerge3()
+      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["RawSimulations"]]
+      }else{
+          dataMerge3()
+      }
       
       
-      
-      xrf.pca.results <- xrfKReactive()
-      
-      xrf.k <- xrfKReactive()
-      
+      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["Simulations"]]
+      }else{
+          xrfKReactive()
+      }
+
       spectra.line.table$Cluster <- xrf.k$Cluster
       spectra.line.table$PC1 <- xrf.k$PC1
       spectra.line.table$PC2 <- xrf.k$PC2
@@ -2739,13 +2834,19 @@ yearSequence <- reactive({
 
   plotInput2 <- reactive({
       
-      spectra.line.table <- dataMerge3()
+      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["RawSimulations"]]
+      }else{
+          dataMerge3()
+      }
       
 
       
-  xrf.pca.results <- xrfKReactive()
-  
-  xrf.k <- xrfKReactive()
+      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["Simulations"]]
+      }else{
+          xrfKReactive()
+      }
   
   quality.table <-qualityTable()
   
@@ -2767,12 +2868,14 @@ yearSequence <- reactive({
   
   spectra.line.table <- subset(spectra.line.table, !(spectra.line.table$PC2 < input$ylimrangepca[1] | spectra.line.table$PC2 > input$ylimrangepca[2]))
   
+  if(input$elipseplot1==TRUE && input$pcacolour == "Source"){just.samples <- dplyr::filter(spectra.line.table, Type %in% "Sample")}
   
+  if(input$elipseplot1==TRUE && input$pcacolour == "Source"){just.simulations <- dplyr::filter(spectra.line.table, Type %in% "Simulation")}
 
 
   
   
-  basic <- ggplot(data= spectra.line.table) +
+  basic <- ggplot(data=spectra.line.table, aes(PC1, PC2)) +
   geom_point(aes(PC1, PC2), size = input$spotsize) +
   scale_x_continuous("Principle Component 1") +
   scale_y_continuous("Principle Component 2") +
@@ -2842,14 +2945,14 @@ yearSequence <- reactive({
   scale_colour_discrete("Source") +
   geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
   
-  
-  source.ellipse <- ggplot(data= spectra.line.table)+
-  geom_point(aes(PC1, PC2, colour=as.factor(Source), shape=as.factor(Source)), size = input$spotsize+1) +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+  if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+  source.ellipse <- ggplot(data=spectra.line.table, aes(PC1, PC2))+
+  geom_point(data=just.samples, aes(PC1, PC2, colour=as.factor(Source), shape=as.factor(Source)), size = input$spotsize+1) +
+  geom_point(data=just.samples, aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
   scale_x_continuous("Principle Component 1") +
   scale_y_continuous("Principle Component 2") +
   theme_light() +
-  stat_ellipse(aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
+  stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
   theme(axis.text.x = element_text(size=15)) +
   theme(axis.text.y = element_text(size=15)) +
   theme(axis.title.x = element_text(size=15)) +
@@ -2860,7 +2963,8 @@ yearSequence <- reactive({
   guides(linetype=FALSE) +
   scale_shape_manual("Source", values=1:nlevels(as.factor(spectra.line.table$Source))) +
   scale_colour_discrete("Source") +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  geom_point(data=just.samples, aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  }
 
 
   qual.regular.1 <- ggplot(data= spectra.line.table) +
@@ -3087,11 +3191,17 @@ yearSequence <- reactive({
   
   hoverHold <- reactive({
       
-      spectra.line.table <- dataMerge3()
-
-      xrf.pca.results <- xrfKReactive()
+      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["RawSimulations"]]
+      }else{
+          dataMerge3()
+      }
       
-      xrf.k <- xrfKReactive()
+      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+          xrfkReactivePrep()[["Simulations"]]
+      }else{
+          xrfKReactive()
+      }
       
       
       colour.table <- data.frame(xrf.k$Cluster, spectra.line.table)
@@ -3171,9 +3281,11 @@ yearSequence <- reactive({
   
   
   pcaTableInputFull <- reactive({
-      xrf.pca.results <- xrfPCAReactive()
+      # xrf.pca.results <- xrfPCAReactive()
 
-      xrf.pca.results
+#xrf.pca.results
+
+sourceDefinitions()
  
       
   })
@@ -3185,7 +3297,7 @@ yearSequence <- reactive({
       
     
       
-      df <- xrfKReactive()
+      df <- xrfkReactivePrep()[["Simulations"]]
       
       
 

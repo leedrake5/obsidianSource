@@ -4005,6 +4005,19 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
     
 }
 
+source.replicate <- function(source, data, elements){
+    
+    new.data <- dplyr::filter(data,
+    Sources %in% source)
+    
+    sim.list <- lapply(elements, function(x) rnorm(100, mean=new.data[,paste0("Mean", x)], sd=new.data[,paste0("SD", x)]))
+    names(sim.list) <- elements
+    sim.frame <- data.frame(rep(source, 100), sim.list)
+    colnames(sim.frame) <- c("Source", elements)
+    return(sim.frame)
+    
+}
+
 
 #####Read Obsidian Data
 

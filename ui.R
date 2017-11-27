@@ -234,14 +234,14 @@ uiOutput('clipsubsetfinal')
 mainPanel(
 tabsetPanel(
 id = 'dataset',
-tabPanel('Data', dataTableOutput('mydatamerge2')),
 tabPanel('Subsets', splitLayout(cellWidths=c("10%", "10%", "10%", "10%", "10%", "10%"),
 uiOutput('qualSelect1a'),
 uiOutput('qualSelect2a'),
 uiOutput('qualSelect3a'),
 uiOutput('qualSelect4a')
 )
-)
+),
+tabPanel('Data', dataTableOutput('mydatamerge2'))
 )
 )))),
 
@@ -296,7 +296,7 @@ selectInput("pcacolour", "Colour", choices=c(
 "Qualitative3"="Qualitative3",
 "Qualitative4"="Qualitative4",
 "Quantitative"="Quantitative"),
-selected="Cluster"),
+selected="Source"),
 
 uiOutput('pcaFocusVariable'),
 uiOutput('pcaFocusUI'),
@@ -305,7 +305,9 @@ uiOutput('pcaFocusLabel'),
 
 sliderInput("spotsize", label = "Point Size", value=5, min=2, max=15),
 
-checkboxInput('elipseplot1', "Elipse"),
+uiOutput('pcaellipsesources'),
+
+checkboxInput('elipseplot1', "Elipse", value=TRUE),
 checkboxInput('logtrans', "Log Transform"),
 
 
@@ -368,7 +370,7 @@ selectInput("ternarycolour", "Colour", choices=c(
 "Qualitative3"="Qualitative3",
 "Qualitative4"="Qualitative4",
 "Quantitative" = "Quantitative"),
-selected="Cluster"),
+selected="Source"),
 
 
 tags$hr(),
@@ -426,7 +428,7 @@ c(
 "Qualitative3"="Qualitative3",
 "Qualitative4"="Qualitative4",
 "Quantitative" = "Quantitative"
-), selected="Cluster"),
+), selected="Source"),
 
 uiOutput('ratioFocusVariable'),
 uiOutput('ratioFocusUI'),
