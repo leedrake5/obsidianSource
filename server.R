@@ -2565,9 +2565,12 @@ yearSequence <- reactive({
       
   })
   
+  
+
+  
   output$pcaellipsesources <- renderUI({
 
-      if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      if(input$elipseplot1==TRUE){
           selectInput('pcasources', label="Sources to Plot", choices=names(sourceList()), selected=prepMap()$Source, multiple=TRUE)
       }else{
           p()
@@ -2690,14 +2693,14 @@ yearSequence <- reactive({
   
   xMinPCA <- reactive({
       
-      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      spectra.line.table <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["RawSimulations"]]
       }else{
           dataMerge3()
       }
       
       
-      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      xrf.k <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["Simulations"]]
         }else{
           xrfKReactive()
@@ -2716,14 +2719,14 @@ yearSequence <- reactive({
   
   xMaxPCA <- reactive({
       
-      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      spectra.line.table <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["RawSimulations"]]
       }else{
           dataMerge3()
       }
       
       
-      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      xrf.k <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["Simulations"]]
       }else{
           xrfKReactive()
@@ -2744,14 +2747,14 @@ yearSequence <- reactive({
   
   yMinPCA <- reactive({
       
-      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      spectra.line.table <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["RawSimulations"]]
       }else{
           dataMerge3()
       }
       
       
-      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      xrf.k <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["Simulations"]]
       }else{
           xrfKReactive()
@@ -2769,14 +2772,14 @@ yearSequence <- reactive({
   
   yMaxPCA <- reactive({
       
-      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      spectra.line.table <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["RawSimulations"]]
       }else{
           dataMerge3()
       }
       
       
-      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      xrf.k <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["Simulations"]]
       }else{
           xrfKReactive()
@@ -2806,10 +2809,18 @@ yearSequence <- reactive({
       sliderInput("ylimrangepca", "Y axis", min=yMinPCA(), max=yMaxPCA(), value=c(yMinPCA(), yMaxPCA()), round=FALSE)
   })
   
+  focusTable <- reactive({
+      
+      focus.frame <- data.frame(values[["DF"]], dataMerge3()$Source)
+      colnames(focus.frame) <- c(names(values[["DF"]]), "Source")
+      focus.frame
+    
+  })
+  
   
   output$pcaFocusVariable <- renderUI({
       
-      if(input$pcacolour=="Focus"){selectInput('pcafocusvariable', "Choose Variable", choices=names(values[["DF"]]), selected="Qualitative1")} else {
+      if(input$pcacolour=="Focus"){selectInput('pcafocusvariable', "Choose Variable", choices=names(focusTable()), selected="Source")} else {
           p()
       }
       
@@ -2817,14 +2828,14 @@ yearSequence <- reactive({
   
   output$pcaFocusUI <- renderUI({
       
-      if(input$pcacolour=="Focus"){selectInput('pcafocuschoice', "Choose Focus", choices=unique(values[["DF"]][input$pcafocusvariable]), selected="Qualitative1", multiple=TRUE)} else {
+      if(input$pcacolour=="Focus"){selectInput('pcafocuschoice', "Choose Focus", choices=unique(focusTable()[,input$pcafocusvariable]), selected=NULL, multiple=TRUE)} else {
           p()
       }
       
   })
   
   output$pcaFocusLabel <- renderUI({
-      if(input$pcacolour=="Focus"){selectInput('pcafocuslabel', "Choose Label", choices=c("None", names(values[["DF"]])), selected="None")} else {
+      if(input$pcacolour=="Focus"){selectInput('pcafocuslabel', "Choose Label", choices=c("None", names(focusTable())), selected="None")} else {
           p()
       }
       
@@ -2834,7 +2845,7 @@ yearSequence <- reactive({
 
   plotInput2 <- reactive({
       
-      spectra.line.table <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      spectra.line.table <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["RawSimulations"]]
       }else{
           dataMerge3()
@@ -2842,7 +2853,7 @@ yearSequence <- reactive({
       
 
       
-      xrf.k <- if(input$elipseplot1==TRUE && input$pcacolour == "Source"){
+      xrf.k <- if(input$elipseplot1==TRUE){
           xrfkReactivePrep()[["Simulations"]]
       }else{
           xrfKReactive()
@@ -2868,9 +2879,9 @@ yearSequence <- reactive({
   
   spectra.line.table <- subset(spectra.line.table, !(spectra.line.table$PC2 < input$ylimrangepca[1] | spectra.line.table$PC2 > input$ylimrangepca[2]))
   
-  if(input$elipseplot1==TRUE && input$pcacolour == "Source"){just.samples <- dplyr::filter(spectra.line.table, Type %in% "Sample")}
+  if(input$elipseplot1==TRUE){just.samples <- dplyr::filter(spectra.line.table, Type %in% "Sample")}
   
-  if(input$elipseplot1==TRUE && input$pcacolour == "Source"){just.simulations <- dplyr::filter(spectra.line.table, Type %in% "Simulation")}
+  if(input$elipseplot1==TRUE){just.simulations <- dplyr::filter(spectra.line.table, Type %in% "Simulation")}
 
 
   
@@ -2907,14 +2918,14 @@ yearSequence <- reactive({
   scale_colour_discrete("Cluster") +
   geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
 
-
+if(input$elipseplot1==TRUE && input$pcacolour == "Cluster"){
   ellipse <- ggplot(data= spectra.line.table)+
-  geom_point(aes(PC1, PC2, colour=as.factor(Cluster), shape=as.factor(Cluster)), size = input$spotsize+1) +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+  geom_point(data=just.samples, aes(PC1, PC2, colour=as.factor(Cluster), shape=as.factor(Cluster)), size = input$spotsize+1) +
+  geom_point(data=just.samples, aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
   scale_x_continuous("Principle Component 1") +
   scale_y_continuous("Principle Component 2") +
   theme_light() +
-  stat_ellipse(aes(PC1, PC2, colour=as.factor(Cluster), linetype=as.factor(Cluster))) +
+  stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
   theme(axis.text.x = element_text(size=15)) +
   theme(axis.text.y = element_text(size=15)) +
   theme(axis.title.x = element_text(size=15)) +
@@ -2925,8 +2936,8 @@ yearSequence <- reactive({
   guides(linetype=FALSE) +
   scale_shape_manual("Cluster", values=1:nlevels(as.factor(spectra.line.table$Cluster))) +
   scale_colour_discrete("Cluster") +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
-  
+  geom_point(data=just.samples, aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+}
   
   source.regular <- ggplot(data= spectra.line.table) +
   geom_point(aes(PC1, PC2, colour=as.factor(Source), shape=as.factor(Source)), size = input$spotsize+1) +
@@ -2984,14 +2995,14 @@ yearSequence <- reactive({
   scale_colour_discrete("Qualitative1") +
   geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
   
-  
+  if(input$elipseplot1==TRUE && input$pcacolour == "Qualitative1"){
   qual.ellipse.1 <- ggplot(data= spectra.line.table)+
-  geom_point(aes(PC1, PC2, colour=as.factor(Qualitative1), shape=as.factor(Qualitative1)), size = input$spotsize+1) +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+  geom_point(data=just.samples, aes(PC1, PC2, colour=as.factor(Qualitative1), shape=as.factor(Qualitative1)), size = input$spotsize+1) +
+  geom_point(data=just.samples, aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
   scale_x_continuous("Principle Component 1") +
   scale_y_continuous("Principle Component 2") +
   theme_light() +
-  stat_ellipse(aes(PC1, PC2, colour=as.factor(Qualitative1), linetype=as.factor(Qualitative1))) +
+  stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
   theme(axis.text.x = element_text(size=15)) +
   theme(axis.text.y = element_text(size=15)) +
   theme(axis.title.x = element_text(size=15)) +
@@ -3002,7 +3013,8 @@ yearSequence <- reactive({
   guides(linetype=FALSE) +
   scale_shape_manual("Qualitative1", values=1:nlevels(as.factor(spectra.line.table$Qualitative1))) +
   scale_colour_discrete("Qualitative1") +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  geom_point(data=just.samples, aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  }
   
   qual.regular.2 <- ggplot(data= spectra.line.table) +
   geom_point(aes(PC1, PC2, colour=as.factor(Qualitative2), shape=as.factor(Qualitative2)), size = input$spotsize+1) +
@@ -3021,13 +3033,14 @@ yearSequence <- reactive({
   scale_colour_discrete("Qualitative2") +
   geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
   
+  if(input$elipseplot1==TRUE && input$pcacolour == "Qualitative2"){
   qual.ellipse.2 <- ggplot(data= spectra.line.table)+
-  geom_point(aes(PC1, PC2, colour=as.factor(Qualitative2), shape=as.factor(Qualitative2)), size = input$spotsize+1) +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+  geom_point(data=just.samples, aes(PC1, PC2, colour=as.factor(Qualitative2), shape=as.factor(Qualitative2)), size = input$spotsize+1) +
+  geom_point(data=just.samples,aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
   scale_x_continuous("Principle Component 1") +
   scale_y_continuous("Principle Component 2") +
   theme_light() +
-  stat_ellipse(aes(PC1, PC2, colour=as.factor(Qualitative2), linetype=as.factor(Qualitative2))) +
+  stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
   theme(axis.text.x = element_text(size=15)) +
   theme(axis.text.y = element_text(size=15)) +
   theme(axis.title.x = element_text(size=15)) +
@@ -3038,16 +3051,17 @@ yearSequence <- reactive({
   guides(linetype=FALSE) +
   scale_shape_manual("Qualitative2", values=1:nlevels(as.factor(spectra.line.table$Qualitative2))) +
   scale_colour_discrete("Qualitative2") +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  geom_point(data=just.samples,aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  }
   
-  
+  if(input$elipseplot1==TRUE && input$pcacolour == "Qualitative3"){
   qual.ellipse.3 <- ggplot(data= spectra.line.table)+
-  geom_point(aes(PC1, PC2, colour=as.factor(Qualitative3), shape=as.factor(Qualitative3)), size = input$spotsize+1) +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+  geom_point(data=just.samples,aes(PC1, PC2, colour=as.factor(Qualitative3), shape=as.factor(Qualitative3)), size = input$spotsize+1) +
+  geom_point(data=just.samples,aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
   scale_x_continuous("Principle Component 1") +
   scale_y_continuous("Principle Component 2") +
   theme_light() +
-  stat_ellipse(aes(PC1, PC2, colour=as.factor(Qualitative3), linetype=as.factor(Qualitative3))) +
+  stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
   theme(axis.text.x = element_text(size=15)) +
   theme(axis.text.y = element_text(size=15)) +
   theme(axis.title.x = element_text(size=15)) +
@@ -3058,7 +3072,8 @@ yearSequence <- reactive({
   guides(linetype=FALSE) +
   scale_shape_manual("Qualitative3", values=1:nlevels(as.factor(spectra.line.table$Qualitative3))) +
   scale_colour_discrete("Qualitative3") +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  geom_point(data=just.samples,aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  }
   
   qual.regular.3 <- ggplot(data= spectra.line.table) +
   geom_point(aes(PC1, PC2, colour=as.factor(Qualitative3), shape=as.factor(Qualitative3)), size = input$spotsize+1) +
@@ -3077,14 +3092,14 @@ yearSequence <- reactive({
   scale_colour_discrete("Qualitative3") +
   geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
   
-  
+  if(input$elipseplot1==TRUE && input$pcacolour == "Qualitative4"){
   qual.ellipse.4 <- ggplot(data= spectra.line.table)+
-  geom_point(aes(PC1, PC2, colour=as.factor(Qualitative4), shape=as.factor(Qualitative4)), size = input$spotsize+1) +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+  geom_point(data=just.samples,aes(PC1, PC2, colour=as.factor(Qualitative4), shape=as.factor(Qualitative4)), size = input$spotsize+1) +
+  geom_point(data=just.samples,aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
   scale_x_continuous("Principle Component 1") +
   scale_y_continuous("Principle Component 2") +
   theme_light() +
-  stat_ellipse(aes(PC1, PC2, colour=as.factor(Qualitative4), linetype=as.factor(Qualitative4))) +
+  stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
   theme(axis.text.x = element_text(size=15)) +
   theme(axis.text.y = element_text(size=15)) +
   theme(axis.title.x = element_text(size=15)) +
@@ -3095,7 +3110,8 @@ yearSequence <- reactive({
   guides(linetype=FALSE) +
   scale_shape_manual("Qualitative4", values=1:nlevels(as.factor(spectra.line.table$Qualitative4))) +
   scale_colour_discrete("Qualitative4") +
-  geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  geom_point(data=just.samples,aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
+  }
   
   qual.regular.4 <- ggplot(data= spectra.line.table) +
   geom_point(aes(PC1, PC2, colour=as.factor(Qualitative4), shape=as.factor(Qualitative4)), size = input$spotsize+1) +
@@ -3114,21 +3130,86 @@ yearSequence <- reactive({
   scale_colour_discrete("Qualitative4") +
   geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2)
   
-  if (input$pcacolour == "Focus" && input$pcafocuslabel=="None") {new.spectra.line.table <- spectra.line.table[,c("Sample", "PC1", "PC2", input$pcafocusvariable)]}
+  if (input$pcacolour == "Focus" && input$pcafocuslabel=="None" && input$elipseplot1 == FALSE) {new.spectra.line.table <- spectra.line.table[,c("Sample", "PC1", "PC2", input$pcafocusvariable)]}
   
-  if (input$pcacolour == "Focus" && input$pcafocuslabel=="None") {colnames(new.spectra.line.table) <- c("Sample", "PC1", "PC2", "Selected")}
+  if (input$pcacolour == "Focus" && input$pcafocuslabel=="None" && input$elipseplot1 == FALSE) {colnames(new.spectra.line.table) <- c("Sample", "PC1", "PC2", "Selected")}
   
-  if (input$elipseplot1 == FALSE && input$pcacolour == "Focus" && input$pcafocuslabel=="None") {select.plot <- gghighlight_point(new.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize,  use_group_by=FALSE, use_direct_label=FALSE) + scale_x_continuous("Principle Component 1") + scale_y_continuous("Principle Component 2") + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + theme(legend.text=element_text(size=15)) + theme_light()}
+  if (input$elipseplot1 == FALSE && input$pcacolour == "Focus" && input$pcafocuslabel=="None") {
+      select.plot <- gghighlight_point(new.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize,  use_group_by=FALSE, use_direct_label=FALSE) +
+      scale_x_continuous("Principle Component 1") +
+      scale_y_continuous("Principle Component 2") +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      theme_light()
+      
+  }
   
-  if (input$elipseplot1 == TRUE && input$pcacolour == "Focus"  && input$pcafocuslabel=="None") {select.plot.ellipse <- gghighlight_point(new.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, use_group_by=FALSE, use_direct_label=FALSE) + scale_x_continuous("Principle Component 1") + scale_y_continuous("Principle Component 2") + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
+  #if (input$elipseplot1 == TRUE && input$pcacolour == "Focus"  && input$pcafocuslabel=="None") {select.plot.ellipse <- gghighlight_point(new.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, use_group_by=FALSE, use_direct_label=FALSE) + scale_x_continuous("Principle Component 1") + scale_y_continuous("Principle Component 2") + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
   
-  if (input$pcacolour == "Focus" && input$pcafocuslabel!="None") {newer.spectra.line.table <- spectra.line.table[,c("Sample", "PC1", "PC2", input$pcafocusvariable, input$pcafocuslabel)]}
+  if (input$pcacolour == "Focus" && input$pcafocuslabel!="None" && input$elipseplot1 == FALSE) {newer.spectra.line.table <- spectra.line.table[,c("Sample", "PC1", "PC2", input$pcafocusvariable, input$pcafocuslabel)]}
   
-  if (input$pcacolour == "Focus" && input$pcafocuslabel!="None") {colnames(newer.spectra.line.table) <- c("Sample", "PC1", "PC2", "Selected", "Label")}
+  if (input$pcacolour == "Focus" && input$pcafocuslabel!="None" && input$elipseplot1 == FALSE) {colnames(newer.spectra.line.table) <- c("Sample", "PC1", "PC2", "Selected", "Label")}
   
-  if (input$elipseplot1 == FALSE && input$pcacolour == "Focus" && input$pcafocuslabel!="None") {select.plot <- gghighlight_point(newer.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) + scale_x_continuous("Principle Component 1") + scale_y_continuous("Principle Component 2") + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + theme_light()}
+  if (input$elipseplot1 == FALSE && input$pcacolour == "Focus" && input$pcafocuslabel!="None") {
+      select.plot <- gghighlight_point(newer.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) +
+      scale_x_continuous("Principle Component 1") +
+      scale_y_continuous("Principle Component 2") +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme_light()
+      
+  }
   
-  if (input$elipseplot1 == TRUE && input$pcacolour == "Focus"  && input$pcafocuslabel!="None") {select.plot.ellipse <- gghighlight_point(newer.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) + scale_x_continuous("Principle Component 1") + scale_y_continuous("Principle Component 2") + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
+  #if (input$elipseplot1 == TRUE && input$pcacolour == "Focus"  && input$pcafocuslabel!="None") {select.plot.ellipse <- gghighlight_point(newer.spectra.line.table, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) + scale_x_continuous("Principle Component 1") + scale_y_continuous("Principle Component 2") + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
+  
+  
+  if (input$pcacolour == "Focus" && input$pcafocuslabel=="None" && input$elipseplot1 == TRUE) {new.spectra.line.table.source <- just.samples[,c("Sample", "PC1", "PC2", input$pcafocusvariable)]}
+  
+  if (input$pcacolour == "Focus" && input$pcafocuslabel=="None" && input$elipseplot1 == TRUE) {colnames(new.spectra.line.table.source) <- c("Sample", "PC1", "PC2", "Selected")}
+  
+  
+  if (input$elipseplot1 == TRUE && input$pcacolour == "Focus"  && input$pcafocuslabel=="None") {
+      select.plot.ellipse <- gghighlight_point(new.spectra.line.table.source, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, use_group_by=FALSE, use_direct_label=FALSE) +
+      scale_x_continuous("Principle Component 1") +
+      scale_y_continuous("Principle Component 2") +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
+      theme_light()
+      
+  }
+  
+  if (input$pcacolour == "Focus" && input$pcafocuslabel!="None" && input$elipseplot1 == TRUE) {newer.spectra.line.table.source <- just.samples[,c("Sample", "PC1", "PC2", input$pcafocusvariable, input$pcafocuslabel)]}
+  
+  if (input$pcacolour == "Focus" && input$pcafocuslabel!="None" && input$elipseplot1 == TRUE) {colnames(newer.spectra.line.table.source) <- c("Sample", "PC1", "PC2", "Selected", "Label")}
+  
+  if (input$elipseplot1 == TRUE && input$pcacolour == "Focus"  && input$pcafocuslabel!="None") {
+      select.plot.ellipse <- gghighlight_point(newer.spectra.line.table.source, aes(PC1, PC2, colour=Selected), Selected %in% c(input$pcafocuschoice), size=input$spotsize, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) +
+      scale_x_continuous("Principle Component 1") +
+      scale_y_continuous("Principle Component 2") +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
+      theme_light()
+      
+  }
   
   
   #quant.regular <- ggplot(data= spectra.line.table) +
@@ -3222,7 +3303,7 @@ yearSequence <- reactive({
       
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table$PC2 < input$ylimrangepca[1] | spectra.line.table$PC2 > input$ylimrangepca[2]))
       
-      point.table <- spectra.line.table[,c("Sample", "PC1", "PC2")]
+      point.table <- spectra.line.table[,c("Sample", "Source", "PC1", "PC2")]
       
       point.table
       
@@ -3262,6 +3343,7 @@ yearSequence <- reactive({
       wellPanel(
       style = style,
       p(HTML(paste0("<b> Sample: </b>", point$Sample, "<br/>",
+      "<b> Source: </b>", point$Source, "<br/>",
       "<b> PC1: </b>", point$PC1, "<br/>",
       "<b> PC2: </b>", point$PC2, "<br/>"
 

@@ -303,7 +303,7 @@ uiOutput('pcaFocusUI'),
 uiOutput('pcaFocusLabel'),
 
 
-sliderInput("spotsize", label = "Point Size", value=5, min=2, max=15),
+sliderInput("spotsize", label = "Point Size", value=2, min=2, max=15),
 
 uiOutput('pcaellipsesources'),
 
@@ -343,12 +343,65 @@ uiOutput("hover_infopca")
 ),
 tabPanel("Table", DT::dataTableOutput('xrfpcatable'))
 
+)))))),
 
-))
+tabPanel("Elemental Ratios",
+div(class="outer",
 
-))
+fluidRow(
+sidebarLayout(
 
-)),
+sidebarPanel(
+
+selectInput(
+"ratiocolour", "Ratio Plot Type",
+c(
+"Black" = "Black",
+"Source"="Source",
+"Cluster" = "Cluster",
+"Focus" = "Focus",
+"Qualitative1"="Qualitative1",
+"Qualitative2"="Qualitative2",
+"Qualitative3"="Qualitative3",
+"Qualitative4"="Qualitative4",
+"Quantitative" = "Quantitative"
+), selected="Source"),
+
+uiOutput('ratioFocusVariable'),
+uiOutput('ratioFocusUI'),
+uiOutput('ratioFocusLabel'),
+
+tags$hr(),
+
+uiOutput('inelementratioa'),
+uiOutput('inelementratiob'),
+
+uiOutput('inelementratioc'),
+uiOutput('inelementratiod'),
+
+tags$hr(),
+
+sliderInput("spotsize2", label = "Point Size", value=2, min=2, max=15),
+
+uiOutput('inxlimrangeratio'),
+uiOutput('inylimrangeratio'),
+
+checkboxInput('elipseplot2', "Elipse"),
+
+tags$hr(),
+
+downloadButton('downloadPlot4', "Plot")),
+
+mainPanel(
+tabPanel('Element Ratios',
+div(
+style = "position:relative",
+plotOutput("elementratiotimeseries", height = 650,
+hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce")),
+uiOutput("hover_inforatio")
+))))
+
+))),
 
 
 tabPanel("Ternary Diagram",
@@ -385,7 +438,7 @@ checkboxInput('ternnormplot', "Normalize"),
 
 tags$hr(),
 
-sliderInput("ternpointsize", label = "Point Size", value=5, min=2, max=15),
+sliderInput("ternpointsize", label = "Point Size", value=2, min=2, max=15),
 
 
 tags$hr(),
@@ -405,92 +458,14 @@ resetOnNew = TRUE
 
 ))
 
-)),
-
-tabPanel("Elemental Ratios",
-div(class="outer",
-
-
-fluidRow(
-sidebarLayout(
-
-sidebarPanel(
-
-selectInput(
-"ratiocolour", "Ratio Plot Type",
-c(
-"Black" = "Black",
-"Source"="Source",
-"Cluster" = "Cluster",
-"Focus" = "Focus",
-"Qualitative1"="Qualitative1",
-"Qualitative2"="Qualitative2",
-"Qualitative3"="Qualitative3",
-"Qualitative4"="Qualitative4",
-"Quantitative" = "Quantitative"
-), selected="Source"),
-
-uiOutput('ratioFocusVariable'),
-uiOutput('ratioFocusUI'),
-uiOutput('ratioFocusLabel'),
-
-tags$hr(),
-
-
-
-uiOutput('inelementratioa'),
-uiOutput('inelementratiob'),
-
-uiOutput('inelementratioc'),
-uiOutput('inelementratiod'),
-
-tags$hr(),
-
-sliderInput("spotsize2", label = "Point Size", value=5, min=2, max=15),
-
-uiOutput('inxlimrangeratio'),
-uiOutput('inylimrangeratio'),
-
-
-
-
-checkboxInput('elipseplot2', "Elipse"),
-
-
-
-tags$hr(),
-
-
-downloadButton('downloadPlot4', "Plot")
-
-
-
-),
-
-mainPanel(
-tabPanel('Element Ratios',
-div(
-style = "position:relative",
-plotOutput("elementratiotimeseries", height = 650,
-hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce")),
-uiOutput("hover_inforatio")
-)
-
-
+))
 
 
 
 )
 
-))
-
-))
-
 
 )
-
-
-))
 
 
 
