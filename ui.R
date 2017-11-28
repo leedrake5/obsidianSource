@@ -395,13 +395,12 @@ tags$hr(),
 downloadButton('downloadPlot4', "Plot")),
 
 mainPanel(
-tabPanel(
 div(
 style = "position:relative",
 plotOutput("elementratiotimeseries", height = 650,
 hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce")),
 uiOutput("hover_inforatio")
-))))
+)))
 
 ))),
 
