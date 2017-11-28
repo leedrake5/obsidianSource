@@ -3468,6 +3468,22 @@ secondDefaultSelect <- reactive({
   })
   
   
+
+  
+  
+  output$ratioellipsesources <- renderUI({
+      
+      used.sources <- unique(xrfkReactivePrep()[["RawSimulations"]]["Source"])
+      
+      if(input$elipseplot2==TRUE){
+          selectInput('ratiosources', label="Sources to Plot", choices=used.sources, selected=used.sources, multiple=TRUE)
+      }else{
+          p()
+      }
+      
+  })
+  
+  
   ratioChooseA <- reactive({
       spectra.line.table <- dataMerge3()
       spectra.line.names <- colnames(spectra.line.table)
@@ -3683,43 +3699,55 @@ secondDefaultSelect <- reactive({
   
   plotInput4 <- reactive({
       
-      spectra.line.table <- dataMerge3()
+      
+      spectra.line.table <- if(input$elipseplot2==TRUE){
+          xrfkReactivePrep()[["RawSimulations"]]
+      }else{
+          dataMerge3()
+      }
+      
       spectra.line.table$None <- rep(1, length(spectra.line.table$Sample))
 
       
-     
-     xrf.k <- xrfKReactive()
-     
-     colour.table <- data.frame(xrf.k$Cluster, spectra.line.table)
-     colnames(colour.table) <- c("Cluster", names(spectra.line.table))
-     
-     
-     
-     
-     unique.spec <- seq(1, length(colour.table$Sample), 1)
-     null <- rep(1, length(unique.spec))
-     
-     spectra.line.table$Cluster <- xrf.k$Cluster
+      xrf.k <- if(input$elipseplot2==TRUE){
+          xrfkReactivePrep()[["Simulations"]]
+      }else{
+          xrfKReactive()
+      }
+      
+      quality.table <-qualityTable()
+      
+      spectra.line.table$Cluster <- xrf.k$Cluster
+      spectra.line.table$Type <- xrf.k$Type
+      #spectra.line.table$Source <- xrf.k$Source
 
 
 
 
 
-      first.ratio <-spectra.line.table[input$elementratioa]
-      second.ratio <- spectra.line.table[input$elementratiob]
-      third.ratio <- spectra.line.table[input$elementratioc]
-      fourth.ratio <- spectra.line.table[input$elementratiod]
+
+      first.ratio <-spectra.line.table[,input$elementratioa]
+      second.ratio <- spectra.line.table[,input$elementratiob]
+      third.ratio <- spectra.line.table[,input$elementratioc]
+      fourth.ratio <- spectra.line.table[,input$elementratiod]
       
       first.ratio.norm <- first.ratio/sum(first.ratio)
       second.ratio.norm <- second.ratio/sum(second.ratio)
       third.ratio.norm <- third.ratio/sum(third.ratio)
       fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
       
-      
+      if(input$elipseplot2==FALSE){
       ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Source, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, spectra.line.table$Sample)
       colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Source", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Sample"))
+      }
       
-            
+      
+      if(input$elipseplot2==TRUE){
+          ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Source, spectra.line.table$Sample, spectra.line.table$Type)
+          colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Source", "Sample", "Type"))
+      }
+      
+      
             if(input$elementratiob!="None"){ratio.names.x <- c(names(ratio.frame[1]), "/", names(ratio.frame[2]))}
             if(input$elementratiod!="None"){ratio.names.y <- c(names(ratio.frame[3]), "/", names(ratio.frame[4]))}
             
@@ -3729,15 +3757,29 @@ secondDefaultSelect <- reactive({
       ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
       ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
       
-      ratio.frame <- subset(ratio.frame, !((ratio.frame[,1]/ratio.frame[,2]) < input$xlimrangeratio[1] | (ratio.frame[,1]/ratio.frame[,2]) > input$xlimrangeratio[2]))
       
-      ratio.frame <- subset(ratio.frame, !((ratio.frame[,3]/ratio.frame[,4]) < input$ylimrangeratio[1] | (ratio.frame[,3]/ratio.frame[,4]) > input$ylimrangeratio[2]))
+      if(input$elementratiob!="None"){ratio.frame$X <- ratio.frame[,1]/ratio.frame[,2]}
+      if(input$elementratiod!="None"){ratio.frame$Y <- ratio.frame[,3]/ratio.frame[,4]}
       
-      ratio.frame$X <- ratio.frame[,1]/ratio.frame[,2]
-      ratio.frame$Y <- ratio.frame[,3]/ratio.frame[,4]
+      if(input$elementratiob=="None"){ratio.frame$X <- ratio.frame[,1]}
+      if(input$elementratiod=="None"){ratio.frame$Y <- ratio.frame[,3]}
       
-      ratio.frame$X <- ratio.frame[,1]
-      ratio.frame$Y <- ratio.frame[,3]
+      
+      if(input$elipseplot2==TRUE){just.samples <- subset(ratio.frame, Type=="Sample")}
+      if(input$elipseplot2==TRUE){just.samples$Qualitative1 <- dataMerge3()$Qualitative1}
+      if(input$elipseplot2==TRUE){just.samples$Qualitative2 <- dataMerge3()$Qualitative2}
+      if(input$elipseplot2==TRUE){just.samples$Qualitative3 <- dataMerge3()$Qualitative3}
+      if(input$elipseplot2==TRUE){just.samples$Qualitative4 <- dataMerge3()$Qualitative4}
+      if(input$elipseplot2==TRUE){just.samples$Quantitative <- dataMerge3()$Quantitative}
+      
+      
+      if(input$elipseplot2==TRUE){just.simulations <- subset(ratio.frame, Type=="Simulation")}
+      if(input$elipseplot2==TRUE){just.simulations <- subset(just.simulations, Source==input$ratiosources)}
+
+      
+      ratio.frame <- subset(ratio.frame, !((ratio.frame[,1]/ratio.frame[,2]) <= input$xlimrangeratio[1] | (ratio.frame[,1]/ratio.frame[,2]) >= input$xlimrangeratio[2]))
+      
+      ratio.frame <- subset(ratio.frame, !((ratio.frame[,3]/ratio.frame[,4]) <= input$ylimrangeratio[1] | (ratio.frame[,3]/ratio.frame[,4]) >= input$ylimrangeratio[2]))
       
       
       black.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
@@ -3767,11 +3809,12 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
       
-      cluster.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Cluster))) +
-      geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize2+1) +
-      geom_point(colour="grey30", size=input$spotsize2-2) +
-      scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
+      if(input$elipseplot2==TRUE && input$ratiocolour == "Cluster"){
+      cluster.ratio.ellipse.plot <- ggplot(aes(X, Y), data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
+      stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+      geom_point(data=just.samples, aes(colour=as.factor(Cluster), shape=as.factor(Cluster)), size=input$spotsize2+1) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Cluster", values=1:nlevels(as.factor(just.samples$Cluster))) +
       scale_colour_discrete("Cluster") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -3781,7 +3824,10 @@ secondDefaultSelect <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      scale_x_continuous(ratio.names.x) +
+      scale_y_continuous(ratio.names.y) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      }
       
       source.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
       geom_point(aes(colour=as.factor(ratio.frame$Source), shape=as.factor(ratio.frame$Source)), size=input$spotsize2+1) +
@@ -3798,11 +3844,12 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
       
-      source.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Source))) +
-      geom_point(aes(colour=as.factor(ratio.frame$Source), shape=as.factor(ratio.frame$Source)), size=input$spotsize2+1) +
-      geom_point(colour="grey30", size=input$spotsize2-2) +
-      scale_shape_manual("Source", values=1:nlevels(ratio.frame$Source)) +
+      if(input$elipseplot2==TRUE && input$ratiocolour == "Source"){
+      source.ratio.ellipse.plot <- ggplot(aes(X, Y), data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
+      stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+      geom_point(data=just.samples, aes(colour=as.factor(Source), shape=as.factor(Source)), size=input$spotsize2+1) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Source", values=1:nlevels(just.samples$Source)) +
       scale_colour_discrete("Source") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -3812,7 +3859,10 @@ secondDefaultSelect <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      scale_x_continuous(ratio.names.x) +
+      scale_y_continuous(ratio.names.y) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      }
       
       qualitative.ratio.plot.1 <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative1), shape=as.factor(ratio.frame$Qualitative1)), size=input$spotsize2+1) +
@@ -3829,11 +3879,12 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
       
-      qualitative.ratio.ellipse.plot.1 <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Qualitative))) +
-      geom_point(aes(colour=as.factor(ratio.frame$Qualitative1), shape=as.factor(ratio.frame$Qualitative1)), size=input$spotsize2+1) +
-      geom_point(colour="grey30", size=input$spotsize2-2) +
-      scale_shape_manual("Qualitative1", values=1:nlevels(ratio.frame$Qualitative1)) +
+      if(input$elipseplot2==TRUE && input$ratiocolour == "Qualitative1"){
+      qualitative.ratio.ellipse.plot.1 <- ggplot(aes(X, Y), data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
+      stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+      geom_point(data=just.samples, aes(colour=as.factor(Qualitative1), shape=as.factor(Qualitative1)), size=input$spotsize2+1) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Qualitative1", values=1:nlevels(just.samples$Qualitative1)) +
       scale_colour_discrete("Qualitative1") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -3843,7 +3894,10 @@ secondDefaultSelect <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      scale_x_continuous(ratio.names.x) +
+      scale_y_continuous(ratio.names.y) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      }
       
       
       qualitative.ratio.plot.2 <- qplot(X, Y, data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
@@ -3861,11 +3915,12 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
       
-      qualitative.ratio.ellipse.plot.2 <- qplot(X, Y, data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Qualitative2))) +
-      geom_point(aes(colour=as.factor(ratio.frame$Qualitative2), shape=as.factor(ratio.frame$Qualitative2)), size=input$spotsize2+1) +
-      geom_point(colour="grey30", size=input$spotsize2-2) +
-      scale_shape_manual("Qualitative2", values=1:nlevels(ratio.frame$Qualitative2)) +
+      if(input$elipseplot2==TRUE && input$ratiocolour == "Qualitative2"){
+      qualitative.ratio.ellipse.plot.2 <- ggplot(aes(X, Y), data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
+      stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+      geom_point(data=just.samples, aes(colour=as.factor(Qualitative2), shape=as.factor(Qualitative2)), size=input$spotsize2+1) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Qualitative2", values=1:nlevels(just.samples$Qualitative2)) +
       scale_colour_discrete("Qualitative2") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -3875,7 +3930,10 @@ secondDefaultSelect <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      scale_x_continuous(ratio.names.x) +
+      scale_y_continuous(ratio.names.y) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      }
       
       qualitative.ratio.plot.3 <- qplot(X, Y, data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative3), shape=as.factor(ratio.frame$Qualitative3)), size=input$spotsize2+1) +
@@ -3892,11 +3950,12 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
       
-      qualitative.ratio.ellipse.plot.3 <- qplot(X, Y, data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Qualitative3))) +
-      geom_point(aes(colour=as.factor(ratio.frame$Qualitative3), shape=as.factor(ratio.frame$Qualitative3)), size=input$spotsize2+1) +
-      geom_point(colour="grey30", size=input$spotsize2-2) +
-      scale_shape_manual("Qualitative3", values=1:nlevels(ratio.frame$Qualitative3)) +
+      if(input$elipseplot2==TRUE && input$ratiocolour == "Qualitative3"){
+      qualitative.ratio.ellipse.plot.3 <- ggplot(aes(X, Y), data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
+      stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+      geom_point(data=just.samples, aes(colour=as.factor(Qualitative3), shape=as.factor(Qualitative3)), size=input$spotsize2+1) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Qualitative3", values=1:nlevels(just.samples$Qualitative3)) +
       scale_colour_discrete("Qualitative3") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -3906,7 +3965,10 @@ secondDefaultSelect <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      scale_x_continuous(ratio.names.x) +
+      scale_y_continuous(ratio.names.y) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      }
       
       qualitative.ratio.plot.4 <- qplot(X, Y, data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative4), shape=as.factor(ratio.frame$Qualitative4)), size=input$spotsize2+1) +
@@ -3923,11 +3985,12 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
       
-      qualitative.ratio.ellipse.plot.4 <- qplot(X, Y, data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Qualitative4))) +
-      geom_point(aes(colour=as.factor(ratio.frame$Qualitative4), shape=as.factor(ratio.frame$Qualitative4)), size=input$spotsize2+1) +
-      geom_point(colour="grey30", size=input$spotsize2-2) +
-      scale_shape_manual("Qualitative4", values=1:nlevels(ratio.frame$Qualitative4)) +
+      if(input$elipseplot2==TRUE && input$ratiocolour == "Qualitative4"){
+      qualitative.ratio.ellipse.plot.4 <- ggplot(aes(X, Y), data=ratio.frame,  xlab = ratio.names.x, ylab = ratio.names.y ) +
+      stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+      geom_point(data=just.samples, aes(colour=as.factor(Qualitative4), shape=as.factor(Qualitative4)), size=input$spotsize2+1) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Qualitative4", values=1:nlevels(just.samples$Qualitative4)) +
       scale_colour_discrete("Qualitative4") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -3937,26 +4000,90 @@ secondDefaultSelect <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      scale_x_continuous(ratio.names.x) +
+      scale_y_continuous(ratio.names.y) +
+      geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
+      }
       
       
       if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None") {new.ratio.table <- ratio.frame[,c("Sample", "X", "Y", input$ratiofocusvariable)]}
       
       if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None") {colnames(new.ratio.table) <- c("Sample", "X", "Y", "Selected")}
       
-      if (input$elipseplot2 == FALSE && input$ratiocolour == "Focus" && input$ratiofocuslabel=="None") {select.plot <- gghighlight_point(new.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, use_group_by=FALSE, use_direct_label=FALSE) + scale_x_continuous(ratio.names.x) + scale_y_continuous(ratio.names.y) + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + theme_light()}
+      if (input$elipseplot2 == FALSE && input$ratiocolour == "Focus" && input$ratiofocuslabel=="None") {select.plot <- gghighlight_point(new.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, use_group_by=FALSE, use_direct_label=FALSE) +
+          scale_x_continuous(ratio.names.x) +
+          scale_y_continuous(ratio.names.y) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme_light()
+          
+      }
       
-      if (input$elipseplot2 == TRUE && input$ratiocolour == "Focus"  && input$ratiofocuslabel=="None") {select.plot.ellipse <- gghighlight_point(new.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, use_group_by=FALSE, use_direct_label=FALSE) + scale_x_continuous(ratio.names.x) + scale_y_continuous(ratio.names.y) + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
+      #if (input$elipseplot2 == TRUE && input$ratiocolour == "Focus"  && input$ratiofocuslabel=="None") {select.plot.ellipse <- gghighlight_point(new.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, use_group_by=FALSE, use_direct_label=FALSE) + scale_x_continuous(ratio.names.x) + scale_y_continuous(ratio.names.y) + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
       
       if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None") {newer.ratio.table <- ratio.frame[,c("Sample", "X", "Y", input$ratiofocusvariable, input$ratiofocuslabel)]}
       
       if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None") {colnames(newer.ratio.table) <- c("Sample", "X", "Y", "Selected", "Label")}
       
-      if (input$elipseplot2 == FALSE && input$ratiocolour == "Focus" && input$ratiofocuslabel!="None") {select.plot <- gghighlight_point(newer.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) + scale_x_continuous(ratio.names.x) + scale_y_continuous(ratio.names.y) + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + theme_light()}
+      if (input$elipseplot2 == FALSE && input$ratiocolour == "Focus" && input$ratiofocuslabel!="None") {
+          select.plot <- gghighlight_point(newer.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) +
+          scale_x_continuous(ratio.names.x) +
+          scale_y_continuous(ratio.names.y) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme_light()
+          
+      }
       
-      if (input$elipseplot2 == TRUE && input$ratiocolour == "Focus"  && input$ratiofocuslabel!="None") {select.plot.ellipse <- gghighlight_point(newer.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) + scale_x_continuous(ratio.names.x) + scale_y_continuous(ratio.names.y) + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
+      #if (input$elipseplot2 == TRUE && input$ratiocolour == "Focus"  && input$ratiofocuslabel!="None") {select.plot.ellipse <- gghighlight_point(newer.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) + scale_x_continuous(ratio.names.x) + scale_y_continuous(ratio.names.y) + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
       
       
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None" && input$elipseplot2 == TRUE) {new.spectra.line.table.source <- just.samples[,c("Sample", "X", "Y", input$pcafocusvariable)]}
+      
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None" && input$elipseplot2 == TRUE) {colnames(new.spectra.line.table.source) <- c("Sample", "X", "Y", "Selected")}
+      
+      
+      if (input$elipseplot2 == TRUE && input$ratiocolour == "Focus"  && input$ratiofocuslabel=="None") {
+          select.plot.ellipse <- gghighlight_point(new.spectra.line.table.source, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, use_group_by=FALSE, use_direct_label=FALSE) +
+          scale_x_continuous(ratio.names.x) +
+          scale_y_continuous(ratio.names.y) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+          theme_light()
+          
+      }
+      
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None" && input$elipseplot2 == TRUE) {newer.spectra.line.table.source <- just.samples[,c("Sample", "X", "Y", input$pcafocusvariable, input$pcafocuslabel)]}
+      
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None" && input$elipseplot2 == TRUE) {colnames(newer.spectra.line.table.source) <- c("Sample", "X", "Y", "Selected", "Label")}
+      
+      if (input$elipseplot2 == TRUE && input$ratiocolour == "Focus"  && input$ratiofocuslabel!="None") {
+          select.plot.ellipse <- gghighlight_point(newer.spectra.line.table.source, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) +
+          scale_x_continuous(ratio.names.x) +
+          scale_y_continuous(ratio.names.y) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+          theme_light()
+          
+      }
 
       
       

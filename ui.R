@@ -382,11 +382,13 @@ uiOutput('inelementratiod'),
 tags$hr(),
 
 sliderInput("spotsize2", label = "Point Size", value=2, min=2, max=15),
+uiOutput('ratioellipsesources'),
+
 
 uiOutput('inxlimrangeratio'),
 uiOutput('inylimrangeratio'),
 
-checkboxInput('elipseplot2', "Elipse"),
+checkboxInput('elipseplot2', "Elipse", value=TRUE),
 
 tags$hr(),
 
