@@ -395,7 +395,7 @@ tags$hr(),
 downloadButton('downloadPlot4', "Plot")),
 
 mainPanel(
-tabPanel('Element Ratios',
+tabPanel(
 div(
 style = "position:relative",
 plotOutput("elementratiotimeseries", height = 650,

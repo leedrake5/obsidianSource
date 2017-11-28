@@ -3826,6 +3826,7 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(ratio.names.x) +
       scale_y_continuous(ratio.names.y) +
+      guides(linetype=FALSE) +
       geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
       }
       
@@ -3861,6 +3862,7 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(ratio.names.x) +
       scale_y_continuous(ratio.names.y) +
+      guides(linetype=FALSE) +
       geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
       }
       
@@ -3896,6 +3898,7 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(ratio.names.x) +
       scale_y_continuous(ratio.names.y) +
+      guides(linetype=FALSE) +
       geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
       }
       
@@ -3948,6 +3951,7 @@ secondDefaultSelect <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
+      guides(linetype=FALSE) +
       geom_point(colour="grey30", size=input$spotsize2-2, alpha=0.01)
       
       if(input$elipseplot2==TRUE && input$ratiocolour == "Qualitative3"){
@@ -4002,6 +4006,7 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(ratio.names.x) +
       scale_y_continuous(ratio.names.y) +
+      guides(linetype=FALSE) +
       geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
       }
       
@@ -4162,10 +4167,10 @@ secondDefaultSelect <- reactive({
        
        
        
-       first.ratio <-spectra.line.table[input$elementratioa]
-       second.ratio <- spectra.line.table[input$elementratiob]
-       third.ratio <- spectra.line.table[input$elementratioc]
-       fourth.ratio <- spectra.line.table[input$elementratiod]
+       first.ratio <-spectra.line.table[,input$elementratioa]
+       second.ratio <- spectra.line.table[,input$elementratiob]
+       third.ratio <- spectra.line.table[,input$elementratioc]
+       fourth.ratio <- spectra.line.table[,input$elementratiod]
        
        first.ratio.norm <- first.ratio/sum(first.ratio)
        second.ratio.norm <- second.ratio/sum(second.ratio)
@@ -4173,8 +4178,8 @@ secondDefaultSelect <- reactive({
        fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
        
        
-       ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, spectra.line.table$Sample)
-       colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Sample"))
+       ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Source, spectra.line.table$Cluster, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, spectra.line.table$Sample)
+       colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Source", "Cluster", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Sample"))
        
        
        if(input$elementratiob!="None"){ratio.names.x <- c(names(ratio.frame[1]), "/", names(ratio.frame[2]))}
@@ -4186,9 +4191,9 @@ secondDefaultSelect <- reactive({
        ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
        ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
        
-       ratio.frame <- subset(ratio.frame, !((ratio.frame[,1]/ratio.frame[,2]) < input$xlimrangeratio[1] | (ratio.frame[,1]/ratio.frame[,2]) > input$xlimrangeratio[2]))
+       #ratio.frame <- subset(ratio.frame, !((ratio.frame[,1]/ratio.frame[,2]) < input$xlimrangeratio[1] | (ratio.frame[,1]/ratio.frame[,2]) > input$xlimrangeratio[2]))
        
-       ratio.frame <- subset(ratio.frame, !((ratio.frame[,3]/ratio.frame[,4]) < input$ylimrangeratio[1] | (ratio.frame[,3]/ratio.frame[,4]) > input$ylimrangeratio[2]))
+       #ratio.frame <- subset(ratio.frame, !((ratio.frame[,3]/ratio.frame[,4]) < input$ylimrangeratio[1] | (ratio.frame[,3]/ratio.frame[,4]) > input$ylimrangeratio[2]))
        
        ratio.frame$X <- ratio.frame[,1]/ratio.frame[,2]
        ratio.frame$Y <- ratio.frame[,3]/ratio.frame[,4]
@@ -4235,8 +4240,7 @@ secondDefaultSelect <- reactive({
        wellPanel(
        style = style,
        p(HTML(paste0("<b> Sample: </b>", point$Sample, "<br/>",
-       "<b> Qual 1: </b>", point$Qualitative1, "<br/>",
-     "<b> Qual 2: </b>", point$Qualitative2, "<br/>"
+       "<b> Source: </b>", point$Source, "<br/>"
 
        
        
