@@ -22,7 +22,6 @@ library(pbapply)
 library(data.table)
 library(Hmisc)
 library(SDMTools)
-library(xlsx)
 library(Biobase)
 library(scales)
 
@@ -3509,16 +3508,36 @@ prior_function_frame <- function(source.metadata, tree.metadata){
 
 obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.source.list, tree.metadata, source.metadata, sensitivity) {
     
-    treeJackKnife <- function(time,  tree.dataframe, tree.source) {
+    treeJackKnife <- function(tree.dataframe, tree.source) {
+        
+        weird.frame <- merge(x=tree.dataframe, y=tree.source, by.x="Year", by.y="Year")
+        weirder.frame <- weird.frame[complete.cases(weird.frame),]
+        
+        tree.dataframe <- weirder.frame[, names(tree.dataframe)]
+        tree.source <- weirder.frame[, names(tree.source)]
+        
+        time <- weirder.frame$Year
+        
         
         in_interval_value <- function(x, mean, sensitivity){
             (mean-((mean*sensitivity))) < x & x < (mean+((mean*sensitivity)))
         }
         
         in_interval_vector <- function(vector, mean, sensitivity){
-            year.s <- seq(1, length(vector), 1)
-            the.match <- sapply(year.s,  function(x) in_interval_value(vector[x], mean[x,2], sensitivity=sensitivity))
-            any(the.match)
+            
+            sub_interval_vector <- function(vector, mean, sensitivity){
+                year.s <- seq(1, length(vector), 1)
+                the.match <- sapply(year.s,  function(x) in_interval_value(vector[x], mean[x,2], sensitivity=sensitivity))
+                any(the.match)
+            }
+            
+            if(length(vector)!=0){
+                return(sub_interval_vector(vector, mean, sensitivity))
+            }else if(length(vector)==0){
+                return(FALSE)
+            }
+            
+            
         }
         
         #test <- lapply(names(source.list), function(x) in_interval_vector(vector=tree.frame[,2], mean=source.list[[x]]))
@@ -3527,7 +3546,8 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
         tree.source.check <- in_interval_vector(vector=tree.dataframe[,2], mean=tree.source, sensitivity=sensitivity)
         
         
-        treeJackKnifeOrigional <- function(time, tree.dataframe, tree.source) {
+        treeJackKnifeOrigional <- function(tree.dataframe, tree.source) {
+            time <- tree.dataframe$Year
             
             tree.a <- tree.dataframe[match(time, tree.dataframe$Year, nomatch=0),]
             tree.b<- tree.source[match(time, tree.source$Year, nomatch=0),]
@@ -3583,10 +3603,12 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
         colnames(null.frame) <- c("t-value", "r-value", "Sample Overlap")
         
         if(tree.source.check==TRUE){
-            return(treeJackKnifeOrigional(time=time, tree.dataframe=tree.dataframe, tree.source=tree.source))
-        }else if(tree.source.check==FALSE){
+            return(treeJackKnifeOrigional(tree.dataframe=tree.dataframe, tree.source=tree.source))
+        } else if(tree.source.check==FALSE){
             return(null.frame)
-        } else if(tree.source.check==NA){
+        } else if(is.na(tree.source.check)==TRUE){
+            return(null.frame)
+        } else if(is.null(tree.source.check)==TRUE){
             return(null.frame)
         }
     }
@@ -3594,8 +3616,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
     all.tree.names <- names(tree.dataframe)
     all.tree.names <- all.tree.names[2:length(all.tree.names)]
     
-    tree.subset <- subset(tree.dataframe, as.numeric(as.vector(Year)) < max(time))
-    tree.subset <- subset(tree.subset, as.numeric(as.vector(Year)) > min(time))
+    tree.subset <- tree.dataframe
     
     tree.time <- tree.subset[colSums(!is.na(tree.subset)) > 0]
     
@@ -3608,10 +3629,10 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
     source.names <- source.name.list[2,]
     source.names <- make.names(source.names, unique=TRUE)
     
-    apply_treeJackKnife <- function(time, tree.dataframe, tree.source){
+    apply_treeJackKnife <- function(tree.dataframe, tree.source){
         
         temp.frame <- tree.dataframe[,-1]
-        
+        Year <- tree.dataframe$Year
         
         temp.list <- apply(temp.frame, 2, function(x) list(as.vector(x)))
         temp.list <- lapply(temp.list, "[[", 1)
@@ -3621,18 +3642,18 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
             colnames(tree.list[[i]]) <- c("Year", temp.names[i])
         }
         
-        result.list <- lapply(tree.list, function(x) treeJackKnife(time=time, x, tree.source))
+        result.list <- lapply(tree.list, function(x) treeJackKnife(x, tree.source))
         
         result.frame <- do.call("rbind", result.list)
         result.frame <- apply(result.frame, 2, as.numeric)
         return(result.frame)
     }
     
-
+    
     
     #clusterExport(cl, library(parallel))
-    Year <- time
-    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife(time, tree.dataframe, tree.source.list[[x]]), cl=6L)
+    
+    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife( tree.dataframe, tree.source.list[[x]]), cl=6L)
     names(all.group.t) <- names(tree.source.list)
     
     all.group <- ldply(all.group.t, data.frame)
@@ -3800,18 +3821,38 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
 }
 
 
-obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.source.list, sensitivity) {
+obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list, sensitivity) {
     
-    treeJackKnife <- function(time,  tree.dataframe, tree.source) {
+    treeJackKnife <- function(tree.dataframe, tree.source) {
+        
+        weird.frame <- merge(x=tree.dataframe, y=tree.source, by.x="Year", by.y="Year")
+        weirder.frame <- weird.frame[complete.cases(weird.frame),]
+        
+        tree.dataframe <- weirder.frame[, names(tree.dataframe)]
+        tree.source <- weirder.frame[, names(tree.source)]
+        
+        time <- weirder.frame$Year
+        
         
         in_interval_value <- function(x, mean, sensitivity){
             (mean-((mean*sensitivity))) < x & x < (mean+((mean*sensitivity)))
         }
         
         in_interval_vector <- function(vector, mean, sensitivity){
-            year.s <- seq(1, length(vector), 1)
-            the.match <- sapply(year.s,  function(x) in_interval_value(vector[x], mean[x,2], sensitivity=sensitivity))
-            any(the.match)
+            
+            sub_interval_vector <- function(vector, mean, sensitivity){
+                year.s <- seq(1, length(vector), 1)
+                the.match <- sapply(year.s,  function(x) in_interval_value(vector[x], mean[x,2], sensitivity=sensitivity))
+                any(the.match)
+            }
+            
+            if(length(vector)!=0){
+                return(sub_interval_vector(vector, mean, sensitivity))
+            }else if(length(vector)==0){
+                return(FALSE)
+            }
+            
+            
         }
         
         #test <- lapply(names(source.list), function(x) in_interval_vector(vector=tree.frame[,2], mean=source.list[[x]]))
@@ -3820,7 +3861,8 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
         tree.source.check <- in_interval_vector(vector=tree.dataframe[,2], mean=tree.source, sensitivity=sensitivity)
         
         
-        treeJackKnifeOrigional <- function(time, tree.dataframe, tree.source) {
+        treeJackKnifeOrigional <- function(tree.dataframe, tree.source) {
+            time <- tree.dataframe$Year
             
             tree.a <- tree.dataframe[match(time, tree.dataframe$Year, nomatch=0),]
             tree.b<- tree.source[match(time, tree.source$Year, nomatch=0),]
@@ -3876,10 +3918,12 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
         colnames(null.frame) <- c("t-value", "r-value", "Sample Overlap")
         
         if(tree.source.check==TRUE){
-            return(treeJackKnifeOrigional(time=time, tree.dataframe=tree.dataframe, tree.source=tree.source))
-        }else if(tree.source.check==FALSE){
+            return(treeJackKnifeOrigional(tree.dataframe=tree.dataframe, tree.source=tree.source))
+        } else if(tree.source.check==FALSE){
             return(null.frame)
-        } else if(tree.source.check==NA){
+        } else if(is.na(tree.source.check)==TRUE){
+            return(null.frame)
+        } else if(is.null(tree.source.check)==TRUE){
             return(null.frame)
         }
     }
@@ -3887,8 +3931,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
     all.tree.names <- names(tree.dataframe)
     all.tree.names <- all.tree.names[2:length(all.tree.names)]
     
-    tree.subset <- subset(tree.dataframe, as.numeric(as.vector(Year)) < max(time))
-    tree.subset <- subset(tree.subset, as.numeric(as.vector(Year)) > min(time))
+    tree.subset <- tree.dataframe
     
     tree.time <- tree.subset[colSums(!is.na(tree.subset)) > 0]
     
@@ -3901,10 +3944,10 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
     source.names <- source.name.list[2,]
     source.names <- make.names(source.names, unique=TRUE)
     
-    apply_treeJackKnife <- function(time, tree.dataframe, tree.source){
+    apply_treeJackKnife <- function(tree.dataframe, tree.source){
         
         temp.frame <- tree.dataframe[,-1]
-        
+        Year <- tree.dataframe$Year
         
         temp.list <- apply(temp.frame, 2, function(x) list(as.vector(x)))
         temp.list <- lapply(temp.list, "[[", 1)
@@ -3914,7 +3957,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
             colnames(tree.list[[i]]) <- c("Year", temp.names[i])
         }
         
-        result.list <- lapply(tree.list, function(x) treeJackKnife(time=time, x, tree.source))
+        result.list <- lapply(tree.list, function(x) treeJackKnife(x, tree.source))
         
         result.frame <- do.call("rbind", result.list)
         result.frame <- apply(result.frame, 2, as.numeric)
@@ -3925,8 +3968,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
     
     #clusterExport(cl, library(parallel))
     
-    Year <- time
-    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife(time, tree.dataframe, tree.source.list[[x]]), cl=6L)
+    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife( tree.dataframe, tree.source.list[[x]]), cl=6L)
     names(all.group.t) <- names(tree.source.list)
     
     all.group <- ldply (all.group.t, data.frame)
@@ -3996,8 +4038,8 @@ obsidianJackKnifeMultipleSourceSimp <- function(time, tree.dataframe, tree.sourc
     parameter.table <- data.frame(length(tree.dataframe), length(tree.source.list), length(unique(t.value$Source)),  sensitivity)
     colnames(parameter.table) <- c("# Samples", "# Possible Sources", "# Identified Sources",  "Sensitivity")
     
-    result.list <- list(result.summary, parameter.table, t.value, r.value, p.values)
-    names(result.list) <- c("Summary", "Parameters", "T-Value", "r-Value", "p-Value")
+    result.list <- list(result.summary, parameter.table, t.value, r.value, p.values, samp.over)
+    names(result.list) <- c("Summary", "Parameters", "T-Value", "r-Value", "p-Value", "Overlap")
     
     return(result.list)
     

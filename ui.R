@@ -219,10 +219,12 @@ uiOutput('chooseregion'),
 uiOutput('choosestate'),
 uiOutput('source.number'),
 
+
 tags$hr(),
 
 numericInput('sensitivity', "Model Sensitivity", min=0.01, max=0.99, step=0.01, value=0.15),
 checkboxInput('bayesian', "Use Lat/Long as Prior", value=FALSE),
+checkboxInput('constraindata', "Limit to Complete Source Data", value=TRUE),
 
 tags$hr(),
 

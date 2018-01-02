@@ -748,8 +748,13 @@ shinyServer(function(input, output, session) {
             
             )
             
-            predicted.vector <- unlist(predicted.list)
+            predicted.temp.vector <- if(calFileContents1()[["Units"]]=="ppm") {
+                unlist(predicted.list)
+            }else if(calFileContents1()[["Units"]]=="Weight %") {
+                unlist(predicted.list)*10000
+            }
             
+            predicted.vector <- round(unlist(predicted.temp.vector), 0)
             dim(predicted.vector) <- c(length(count.table$Sample), length(elements))
             
             predicted.frame <- data.frame(count.table$Sample, predicted.vector)
@@ -1083,8 +1088,14 @@ shinyServer(function(input, output, session) {
             
             )
             
-            predicted.vector <- unlist(predicted.list)
+            predicted.temp.vector <- if(calFileContents2()[["Units"]]=="ppm") {
+                unlist(predicted.list)
+            }else if(calFileContents2()[["Units"]]=="Weight %") {
+                unlist(predicted.list)*10000
+            }
             
+            predicted.vector <- round(unlist(predicted.temp.vector), 0)
+
             dim(predicted.vector) <- c(length(count.table$Sample), length(elements))
             
             predicted.frame <- data.frame(count.table$Sample, predicted.vector)
@@ -1429,7 +1440,13 @@ shinyServer(function(input, output, session) {
             
             )
             
-            predicted.vector <- unlist(predicted.list)
+            predicted.temp.vector <- if(calFileContents3()[["Units"]]=="ppm") {
+                unlist(predicted.list)
+            }else if(calFileContents3()[["Units"]]=="Weight %") {
+                unlist(predicted.list)*10000
+            }
+            
+            predicted.vector <- round(unlist(predicted.temp.vector), 0)
             
             dim(predicted.vector) <- c(length(count.table$Sample), length(elements))
             
@@ -2173,6 +2190,15 @@ choiceLines <- reactive({
        }
   })
   
+  
+  output$source.names <- renderUI({
+      if(input$regionselect==c("Region", "Continent", "Political")){
+          selectInput('selectregion', "Choose Sources", choices=unique(all.data$Region.Plate), selected="Colorado Plateau", multiple=TRUE)
+      }else{
+          p()
+      }
+  })
+  
 
 
 yearSequence <- reactive({
@@ -2214,6 +2240,8 @@ yearSequence <- reactive({
       
   })
   
+
+  
   
   
   sourceList <- reactive({
@@ -2223,12 +2251,14 @@ yearSequence <- reactive({
       
       region.data <- sourcePrep()
      
-      short.source <- region.data[, c("Source.Common.Name", paste0("Mean", input$show_vars))]
+      short.source <- region.data[, c("Source.Common.Name", paste0("Mean", input$show_vars, sep=""))]
       colnames(short.source) <- c("Sources", input$show_vars)
       short.source$Sources <- make.names(short.source$Sources, unique=TRUE)
       short.source <- short.source[order(short.source$Sources),]
-      short.source[short.source == 0] <- NA
-      short.source <- short.source[complete.cases(short.source),]
+      short.source[short.source <= 0] <- NA
+      if(input$constraindata==TRUE){
+          short.source <- short.source[complete.cases(short.source),]
+      }
       
       temp.source <- short.source[,c(input$show_vars)]
       
@@ -2260,7 +2290,9 @@ yearSequence <- reactive({
       source.metadata <- region.data[,c("Source.Common.Name", "Longitude", "Latitude", paste0("Mean", input$show_vars))]
       colnames(source.metadata)[1] <- "Sources"
       source.metadata <- source.metadata[order(source.metadata$Sources),]
-      source.metadata <- source.metadata[complete.cases(source.metadata),]
+       if(input$constraindata==TRUE){
+           source.metadata <- source.metadata[complete.cases(source.metadata),]
+       }
       source.metadata <- source.metadata[,c("Sources", "Longitude", "Latitude")]
       source.metadata[, 2:3] <- sapply(source.metadata[, 2:3], function(x) as.numeric(as.character(x)))
       
@@ -2352,9 +2384,9 @@ yearSequence <- reactive({
 
       
        result.list <- if(input$bayesian==TRUE){
-           obsidianJackKnifeMultipleSourceProb(time=time, tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, tree.metadata=tree.metadata, source.metadata=source.metadata, sensitivity=sensitivity)
+           obsidianJackKnifeMultipleSourceProb(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, tree.metadata=tree.metadata, source.metadata=source.metadata, sensitivity=sensitivity)
        } else if(input$bayesian==FALSE){
-            obsidianJackKnifeMultipleSourceSimp(time=time, tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, sensitivity=sensitivity)
+            obsidianJackKnifeMultipleSourceSimp(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, sensitivity=sensitivity)
        }
        
        incProgress(1/n)
@@ -3188,6 +3220,7 @@ if(input$elipseplot1==TRUE && input$pcacolour == "Cluster"){
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
+      guides(linetype=FALSE) +
       theme_light()
       
   }
@@ -3207,6 +3240,7 @@ if(input$elipseplot1==TRUE && input$pcacolour == "Cluster"){
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       stat_ellipse(data=just.simulations, aes(PC1, PC2, colour=as.factor(Source), linetype=as.factor(Source))) +
+      guides(linetype=FALSE) +
       theme_light()
       
   }
@@ -3674,7 +3708,7 @@ secondDefaultSelect <- reactive({
   
   output$ratioFocusVariable <- renderUI({
       
-      if(input$ratiocolour=="Focus"){selectInput('ratiofocusvariable', "Choose Variable", choices=names(values[["DF"]]), selected="Qualitative1")} else {
+      if(input$ratiocolour=="Focus"){selectInput('ratiofocusvariable', "Choose Variable", choices=names(focusTable()), selected="Source")} else {
           p()
       }
       
@@ -3682,18 +3716,24 @@ secondDefaultSelect <- reactive({
   
   output$ratioFocusUI <- renderUI({
       
-      if(input$ratiocolour=="Focus"){selectInput('ratiofocuschoice', "Choose Focus", choices=unique(values[["DF"]][input$ratiofocusvariable]), selected="Qualitative1", multiple=TRUE)} else {
+      if(input$ratiocolour=="Focus"){selectInput('ratiofocuschoice', "Choose Focus", choices=unique(focusTable()[,input$ratiofocusvariable]), selected=NULL, multiple=TRUE)} else {
           p()
       }
       
   })
   
   output$ratioFocusLabel <- renderUI({
-      if(input$ratiocolour=="Focus"){selectInput('ratiofocuslabel', "Choose Label", choices=c("None", names(values[["DF"]])), selected="None")} else {
+      if(input$ratiocolour=="Focus"){selectInput('ratiofocuslabel', "Choose Label", choices=c("None", names(focusTable())), selected="None")} else {
           p()
       }
       
   })
+  
+  
+  
+  
+  
+  
   
   
   
@@ -3935,6 +3975,7 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(ratio.names.x) +
       scale_y_continuous(ratio.names.y) +
+      guides(linetype=FALSE) +
       geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
       }
       
@@ -3971,6 +4012,7 @@ secondDefaultSelect <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(ratio.names.x) +
       scale_y_continuous(ratio.names.y) +
+      guides(linetype=FALSE) +
       geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
       }
       
@@ -4010,10 +4052,11 @@ secondDefaultSelect <- reactive({
       geom_point(data=just.samples, colour="grey30", size=input$spotsize2-2, alpha=0.01)
       }
       
+ 
       
-      if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None") {new.ratio.table <- ratio.frame[,c("Sample", "X", "Y", input$ratiofocusvariable)]}
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None" && input$elipseplot2 == FALSE) {new.ratio.table <- ratio.frame[,c("Sample", "X", "Y", input$ratiofocusvariable)]}
       
-      if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None") {colnames(new.ratio.table) <- c("Sample", "X", "Y", "Selected")}
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel=="None" && input$elipseplot2 == FALSE) {colnames(new.ratio.table) <- c("Sample", "X", "Y", "Selected")}
       
       if (input$elipseplot2 == FALSE && input$ratiocolour == "Focus" && input$ratiofocuslabel=="None") {select.plot <- gghighlight_point(new.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, use_group_by=FALSE, use_direct_label=FALSE) +
           scale_x_continuous(ratio.names.x) +
@@ -4030,9 +4073,9 @@ secondDefaultSelect <- reactive({
       
       #if (input$elipseplot2 == TRUE && input$ratiocolour == "Focus"  && input$ratiofocuslabel=="None") {select.plot.ellipse <- gghighlight_point(new.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, use_group_by=FALSE, use_direct_label=FALSE) + scale_x_continuous(ratio.names.x) + scale_y_continuous(ratio.names.y) + theme(axis.text.x = element_text(size=15)) + theme(axis.text.y = element_text(size=15)) + theme(axis.title.x = element_text(size=15)) + theme(axis.title.y = element_text(size=15, angle=90)) + theme(plot.title=element_text(size=20)) + theme(legend.title=element_text(size=15)) + stat_ellipse() + theme_light()}
       
-      if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None") {newer.ratio.table <- ratio.frame[,c("Sample", "X", "Y", input$ratiofocusvariable, input$ratiofocuslabel)]}
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None" && input$elipseplot2 == FALSE) {newer.ratio.table <- ratio.frame[,c("Sample", "X", "Y", input$ratiofocusvariable, input$ratiofocuslabel)]}
       
-      if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None") {colnames(newer.ratio.table) <- c("Sample", "X", "Y", "Selected", "Label")}
+      if (input$ratiocolour == "Focus" && input$ratiofocuslabel!="None" && input$elipseplot2 == FALSE) {colnames(newer.ratio.table) <- c("Sample", "X", "Y", "Selected", "Label")}
       
       if (input$elipseplot2 == FALSE && input$ratiocolour == "Focus" && input$ratiofocuslabel!="None") {
           select.plot <- gghighlight_point(newer.ratio.table, aes(X, Y, colour=Selected), Selected %in% c(input$ratiofocuschoice), size=input$spotsize2, label_key=Label, use_group_by=FALSE, use_direct_label=TRUE) +
@@ -4067,6 +4110,7 @@ secondDefaultSelect <- reactive({
           theme(plot.title=element_text(size=20)) +
           theme(legend.title=element_text(size=15)) +
           stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+          guides(linetype=FALSE) +
           theme_light()
           
       }
@@ -4086,6 +4130,7 @@ secondDefaultSelect <- reactive({
           theme(plot.title=element_text(size=20)) +
           theme(legend.title=element_text(size=15)) +
           stat_ellipse(data=just.simulations, aes(X, Y, colour=as.factor(Source), linetype=as.factor(Source))) +
+          guides(linetype=FALSE) +
           theme_light()
           
       }
