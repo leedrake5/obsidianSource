@@ -2645,7 +2645,8 @@ yearSequence <- reactive({
          spectra.line.table <- dataMerge3()
          
          xrf.pca.frame <- spectra.line.table[,input$show_vars]
-         xrf.pca.frame <- xrf.pca.frame[complete.cases(xrf.pca.frame),]
+         #xrf.pca.frame <- xrf.pca.frame[complete.cases(xrf.pca.frame),]
+         xrf.pca.frame <- xrf.pca.frame[,!sapply(xrf.pca.frame,function(x) any(is.na(x)))]
          xrf.pca <- prcomp(xrf.pca.frame, scale.=FALSE)
          xrf.k <- kmeans(xrf.pca.frame, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
 
@@ -2677,8 +2678,8 @@ yearSequence <- reactive({
       
       
       xrf.pca.frame.sim <- spectra.line.table.sim[,input$show_vars]
-      xrf.pca.frame.sim <- xrf.pca.frame.sim[complete.cases(xrf.pca.frame.sim),]
-      
+      #xrf.pca.frame.sim <- xrf.pca.frame.sim[complete.cases(xrf.pca.frame.sim),]
+      xrf.pca.frame.sim <- xrf.pca.frame.sim[,!sapply(xrf.pca.frame.sim,function(x) any(is.na(x)))]
       
       xrf.k.sim <- kmeans(xrf.pca.frame.sim, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
       xrf.pca.sim <- prcomp(xrf.pca.frame.sim, scale.=FALSE)
