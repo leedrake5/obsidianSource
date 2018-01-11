@@ -2581,13 +2581,17 @@ yearSequence <- reactive({
       
       origional.data <- dataMerge2()
       
+      quality.table <- qualityTable()
+      
       #origional.data$Serial <- obsidianSource()[["Posterior Probabilities"]]["Serial"]
       if(input$bayesian==TRUE){
           origional.data$Source <- unlist(obsidianSource()[["Posterior Probabilities"]]["Source"])
       } else if(input$bayesian==FALSE){
           origional.data$Source <- unlist(obsidianSource()[["T-Value"]]["Source"])
       }
-      as.data.frame(origional.data)
+      
+      newest.data <- data.frame(origional.data, quality.table[,c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative")])
+      as.data.frame(newest.data)
 
   })
   
@@ -2646,15 +2650,15 @@ yearSequence <- reactive({
          
          xrf.pca.frame <- spectra.line.table[,input$show_vars]
          #xrf.pca.frame <- xrf.pca.frame[complete.cases(xrf.pca.frame),]
-         xrf.pca.frame <- xrf.pca.frame[,!sapply(xrf.pca.frame,function(x) any(is.na(x)))]
+         xrf.pca.frame <- xrf.pca.frame[,!sapply(xrf.pca.frame, function(x) any(is.na(x)))]
          xrf.pca <- prcomp(xrf.pca.frame, scale.=FALSE)
          xrf.k <- kmeans(xrf.pca.frame, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
 
          xrf.scores <- as.data.frame(xrf.pca$x)
 
-        cluster.frame <- data.frame(spectra.line.table$Sample, spectra.line.table$Source, xrf.k$cluster, xrf.scores)
+        cluster.frame <- data.frame(spectra.line.table$Sample, spectra.line.table$Source, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, xrf.k$cluster, xrf.scores)
 
-        colnames(cluster.frame) <- c("Assay", "Source", "Cluster", names(xrf.scores))
+        colnames(cluster.frame) <- c("Assay", "Source", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Cluster", names(xrf.scores))
       
   
           cluster.frame
@@ -2666,13 +2670,22 @@ yearSequence <- reactive({
   xrfkReactivePrep <- reactive({
       
       spectra.line.table <- dataMerge3()
-      spectra.line.table <- spectra.line.table[,c("Sample", "Source", input$show_vars)]
+      #spectra.line.table <- spectra.line.table[,c("Sample", "Source", input$show_vars)]
       spectra.line.table$Type <- rep("Sample", length(spectra.line.table[,1]))
       
       simulation.table <- sourceDefinitions()
       simulation.table <- simulation.table[,c("Source", input$show_vars)]
       simulation.table$Sample <- simulation.table$Source
+      simulation.table$Qualitative1 <- rep("Hold", length(simulation.table$Source))
+      simulation.table$Qualitative2 <- rep("Hold", length(simulation.table$Source))
+      simulation.table$Qualitative3 <- rep("Hold", length(simulation.table$Source))
+      simulation.table$Qualitative4 <- rep("Hold", length(simulation.table$Source))
+      simulation.table$Quantitative <- rep(as.numeric("0"), length(simulation.table$Source))
       simulation.table$Type <- rep("Simulation", length(simulation.table[,1]))
+      
+      spectra.line.table <- spectra.line.table[,c("Source", "Sample", "Type", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", input$show_vars)]
+      simulation.table <- simulation.table[,c("Source", "Sample", "Type", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", input$show_vars)]
+
       
       spectra.line.table.sim <- rbind(spectra.line.table, simulation.table)
       
@@ -2686,9 +2699,9 @@ yearSequence <- reactive({
       
       xrf.scores.sim <- as.data.frame(xrf.pca.sim$x)
       
-      cluster.frame.sim <- data.frame(spectra.line.table.sim$Sample, spectra.line.table.sim$Source, spectra.line.table.sim$Type, xrf.k.sim$cluster, xrf.scores.sim)
+      cluster.frame.sim <- data.frame(spectra.line.table.sim$Sample, spectra.line.table.sim$Source, spectra.line.table.sim$Type, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, xrf.k.sim$cluster, xrf.scores.sim)
       
-      colnames(cluster.frame.sim) <- c("Assay", "Source", "Type", "Cluster", names(xrf.scores.sim))
+      colnames(cluster.frame.sim) <- c("Assay", "Source", "Type",  "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Cluster", names(xrf.scores.sim))
       
       cluster.list <- list(xrfKReactive(), cluster.frame.sim, spectra.line.table.sim)
       names(cluster.list) <- c("Samples", "Simulations", "RawSimulations")
@@ -2697,14 +2710,13 @@ yearSequence <- reactive({
       
       
   })
+  
 
   
   xrfPCAReactive <- reactive({
       
       spectra.line.table <- dataMerge3()
       
-     
-
       
       xrf.clusters <- xrfKReactive()
       
