@@ -313,8 +313,8 @@ checkboxInput('elipseplot1', "Elipse", value=TRUE),
 checkboxInput('logtrans', "Log Transform"),
 
 
-uiOutput('inxlimrangepca'),
-uiOutput('inylimrangepca'),
+#uiOutput('inxlimrangepca'),
+#uiOutput('inylimrangepca'),
 
 
 tags$hr(),

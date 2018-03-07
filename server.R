@@ -134,6 +134,12 @@ shinyServer(function(input, output, session) {
         data
     })
     
+    fullSpectra <- reactive({
+        
+        fullSpectra1()
+        
+    })
+    
     
     netCounts1 <- reactive({
         
@@ -1642,10 +1648,13 @@ shinyServer(function(input, output, session) {
              
              
              
-             spectral.plot <- qplot(data$Energy, data$CPS, xlab = "Energy (keV)", ylab = "Counts per Second", geom="line", colour=data$Sample) +
+             spectral.plot <- ggplot(data) +
+             geom_line(aes(Energy, CPS, colour=Sample)) +
+             scale_x_continuous("Energy (keV") +
+             scale_y_continuous("Counts per Second") +
              theme_light()+
-             theme(legend.position="bottom") +
-             geom_segment(aes(x=element$Line, xend=element$Line, y = 0, yend=intensity.norm), colour="grey50", linetype=2)  +
+             guides(legend=FALSE) +
+             geom_segment(data=element, aes(x=element$Line, xend=element$Line, y = 0, yend=intensity.norm), colour="grey50", linetype=2)  +
              scale_colour_discrete("Sample") +
              coord_cartesian(xlim = ranges$x, ylim = ranges$y)
              
@@ -1684,7 +1693,7 @@ spectral.plot
 
         output$distPlot <- renderPlot({
 
-print(plotInput())
+            plotInput()
 
 
         })
@@ -1694,8 +1703,8 @@ print(plotInput())
         observeEvent(input$plot1_dblclick, {
             brush <- input$plot1_brush
             if (!is.null(brush)) {
-                ranges$x <- c(brush$xmin*mean(data$Energy), brush$xmax*max(data$Energy))
-                ranges$y <- c(brush$ymin*mean(data$CPS), brush$ymax*max(data$CPS))
+                ranges$x <- c(brush$xmin, brush$xmax)
+                ranges$y <- c(brush$ymin, brush$ymax)
                 
             } else {
                 ranges$x <- NULL
@@ -2591,7 +2600,7 @@ yearSequence <- reactive({
       }
       
       newest.data <- data.frame(origional.data, quality.table[,c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative")])
-      as.data.frame(newest.data)
+      as.data.frame(origional.data)
 
   })
   
@@ -2699,7 +2708,9 @@ yearSequence <- reactive({
       
       xrf.scores.sim <- as.data.frame(xrf.pca.sim$x)
       
-      cluster.frame.sim <- data.frame(spectra.line.table.sim$Sample, spectra.line.table.sim$Source, spectra.line.table.sim$Type, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, xrf.k.sim$cluster, xrf.scores.sim)
+      spectra.line.table.sim <- spectra.line.table.sim[,!sapply(spectra.line.table.sim,function(x) any(is.na(x)))]
+      
+      cluster.frame.sim <- data.frame(spectra.line.table.sim$Sample, spectra.line.table.sim$Source, spectra.line.table.sim$Type, spectra.line.table.sim$Qualitative1, spectra.line.table.sim$Qualitative2, spectra.line.table.sim$Qualitative3, spectra.line.table.sim$Qualitative4, spectra.line.table.sim$Quantitative, xrf.k.sim$cluster, xrf.scores.sim)
       
       colnames(cluster.frame.sim) <- c("Assay", "Source", "Type",  "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Cluster", names(xrf.scores.sim))
       
@@ -2920,9 +2931,9 @@ yearSequence <- reactive({
   spectra.line.table$PC2 <- xrf.k$PC2
   
   
-  spectra.line.table <- subset(spectra.line.table, !(spectra.line.table$PC1 < input$xlimrangepca[1] | spectra.line.table$PC1 > input$xlimrangepca[2]))
+  #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table$PC1 < input$xlimrangepca[1] | spectra.line.table$PC1 > input$xlimrangepca[2]))
   
-  spectra.line.table <- subset(spectra.line.table, !(spectra.line.table$PC2 < input$ylimrangepca[1] | spectra.line.table$PC2 > input$ylimrangepca[2]))
+  #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table$PC2 < input$ylimrangepca[1] | spectra.line.table$PC2 > input$ylimrangepca[2]))
   
   if(input$elipseplot1==TRUE){just.samples <- dplyr::filter(spectra.line.table, Type %in% "Sample")}
   

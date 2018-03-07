@@ -3,7 +3,7 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) install.packages(new.packages)
 
 
-dyn.load(paste0(system2('/usr/libexec/java_home', stdout = TRUE), '/jre/lib/server/libjvm.dylib'))
+#dyn.load(paste0(system2('/usr/libexec/java_home', stdout = TRUE), '/jre/lib/server/libjvm.dylib'))
 
 
 library(pbapply)
@@ -17,12 +17,8 @@ library(shiny)
 library(ggmap)
 library(geosphere)
 library(parallel)
-library(Biobase)
 library(pbapply)
 library(data.table)
-library(Hmisc)
-library(SDMTools)
-library(Biobase)
 library(scales)
 
 
