@@ -291,7 +291,7 @@ sidebarPanel(
 uiOutput('knumui'),
 
 selectInput("pcacolour", "Colour", choices=c(
-"Black"="black",
+"Black"="Black",
 "Source"="Source",
 "Cluster"="Cluster",
 "Focus" = "Focus",
@@ -398,8 +398,6 @@ sliderInput("spotsize2", label = "Point Size", value=2, min=2, max=15),
 uiOutput('ratioellipsesources'),
 
 
-uiOutput('inxlimrangeratio'),
-uiOutput('inylimrangeratio'),
 
 checkboxInput('elipseplot2', "Elipse", value=TRUE),
 

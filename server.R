@@ -2631,7 +2631,8 @@ yearSequence <- reactive({
       }
       
       newest.data <- data.frame(origional.data, quality.table[,c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative")])
-      as.data.frame(origional.data)
+      #names(newest.data) <- c(colnames(origional.data), "Source", c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative"))
+      as.data.frame(newest.data)
 
   })
   
@@ -3761,111 +3762,6 @@ secondDefaultSelect <- reactive({
   })
   
   
-  xMinRatio <- reactive({
-      
-      spectra.line.table <- dataMerge3()
-      spectra.line.table$None <- rep(1, length(spectra.line.table$Sample))
-
-      
-      first.ratio <-spectra.line.table[input$elementratioa]
-      second.ratio <- spectra.line.table[input$elementratiob]
-      third.ratio <- spectra.line.table[input$elementratioc]
-      fourth.ratio <- spectra.line.table[input$elementratiod]
-      
-      first.ratio.norm <- first.ratio/sum(first.ratio)
-      second.ratio.norm <- second.ratio/sum(second.ratio)
-      third.ratio.norm <- third.ratio/sum(third.ratio)
-      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
-      
-      
-      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio,  spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative"))
-      
-      round(min((ratio.frame[,1]/ratio.frame[,2])), 2)
-      
-      
-  })
-  
-  xMaxRatio <- reactive({
-      
-      spectra.line.table <- dataMerge3()
-      spectra.line.table$None <- rep(1, length(spectra.line.table$Sample))
-
-     
-      
-      first.ratio <-spectra.line.table[input$elementratioa]
-      second.ratio <- spectra.line.table[input$elementratiob]
-      third.ratio <- spectra.line.table[input$elementratioc]
-      fourth.ratio <- spectra.line.table[input$elementratiod]
-      
-      first.ratio.norm <- first.ratio/sum(first.ratio)
-      second.ratio.norm <- second.ratio/sum(second.ratio)
-      third.ratio.norm <- third.ratio/sum(third.ratio)
-      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
-      
-      
-      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio,  spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative"))
-  
-      
-      round(max((ratio.frame[,1]/ratio.frame[,2])), 2)
-      
-      
-  })
-  
-  
-  
-  yMinRatio <- reactive({
-      
-      spectra.line.table <- dataMerge3()
-      spectra.line.table$None <- rep(1, length(spectra.line.table$Sample))
-
-      
-      first.ratio <-spectra.line.table[input$elementratioa]
-      second.ratio <- spectra.line.table[input$elementratiob]
-      third.ratio <- spectra.line.table[input$elementratioc]
-      fourth.ratio <- spectra.line.table[input$elementratiod]
-      
-      first.ratio.norm <- first.ratio/sum(first.ratio)
-      second.ratio.norm <- second.ratio/sum(second.ratio)
-      third.ratio.norm <- third.ratio/sum(third.ratio)
-      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
-      
-      
-      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2),  "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative"))
-      
-      round(min((ratio.frame[,3]/ratio.frame[,4])), 2)
-      
-      
-  })
-  
-  yMaxRatio <- reactive({
-      
-      spectra.line.table <- dataMerge3()
-      spectra.line.table$None <- rep(1, length(spectra.line.table$Sample))
-
-      
-      first.ratio <-spectra.line.table[input$elementratioa]
-      second.ratio <- spectra.line.table[input$elementratiob]
-      third.ratio <- spectra.line.table[input$elementratioc]
-      fourth.ratio <- spectra.line.table[input$elementratiod]
-      
-      first.ratio.norm <- first.ratio/sum(first.ratio)
-      second.ratio.norm <- second.ratio/sum(second.ratio)
-      third.ratio.norm <- third.ratio/sum(third.ratio)
-      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
-      
-      
-      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio,  spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2),  "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative"))
-   
-      
-      round(max((ratio.frame[,3]/ratio.frame[,4])), 2)
-      
-      
-  })
-  
   output$inxlimrangeratio <- renderUI({
       
       
@@ -3947,20 +3843,16 @@ secondDefaultSelect <- reactive({
       third.ratio <- spectra.line.table[,input$elementratioc]
       fourth.ratio <- spectra.line.table[,input$elementratiod]
       
-      first.ratio.norm <- first.ratio/sum(first.ratio)
-      second.ratio.norm <- second.ratio/sum(second.ratio)
-      third.ratio.norm <- third.ratio/sum(third.ratio)
-      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
-      
+
       if(input$elipseplot2==FALSE){
       ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Source, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, spectra.line.table$Sample)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Source", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Sample"))
+      colnames(ratio.frame) <-  c(input$elementratioa, input$elementratiob, input$elementratioc, input$elementratiod, "Cluster", "Source", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Sample")
       }
       
       
       if(input$elipseplot2==TRUE){
           ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Source, spectra.line.table$Sample, spectra.line.table$Type)
-          colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Source", "Sample", "Type"))
+          colnames(ratio.frame) <-  c(input$elementratioa, input$elementratiob, input$elementratioc, input$elementratiod, "Cluster", "Source", "Sample", "Type")
       }
       
       
@@ -3992,10 +3884,7 @@ secondDefaultSelect <- reactive({
       if(input$elipseplot2==TRUE){just.simulations <- subset(ratio.frame, Type=="Simulation")}
       if(input$elipseplot2==TRUE){just.simulations <- subset(just.simulations, Source==input$ratiosources)}
 
-      
-      ratio.frame <- subset(ratio.frame, !((ratio.frame[,1]/ratio.frame[,2]) <= input$xlimrangeratio[1] | (ratio.frame[,1]/ratio.frame[,2]) >= input$xlimrangeratio[2]))
-      
-      ratio.frame <- subset(ratio.frame, !((ratio.frame[,3]/ratio.frame[,4]) <= input$ylimrangeratio[1] | (ratio.frame[,3]/ratio.frame[,4]) >= input$ylimrangeratio[2]))
+
       
       
       black.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
@@ -4317,7 +4206,7 @@ secondDefaultSelect <- reactive({
 
       
       
-      if (input$ratiocolour == "Black" && input$elipseplotnorm==FALSE) {
+      if (input$ratiocolour == "Black" && input$elipseplot2==FALSE) {
           black.ratio.plot
       } else if (input$ratiocolour == "Cluster" && input$elipseplot2==FALSE) {
           cluster.ratio.plot
@@ -4398,20 +4287,16 @@ secondDefaultSelect <- reactive({
        third.ratio <- spectra.line.table[,input$elementratioc]
        fourth.ratio <- spectra.line.table[,input$elementratiod]
        
-       first.ratio.norm <- first.ratio/sum(first.ratio)
-       second.ratio.norm <- second.ratio/sum(second.ratio)
-       third.ratio.norm <- third.ratio/sum(third.ratio)
-       fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
        
        if(input$elipseplot2==FALSE){
            ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Source, spectra.line.table$Qualitative1, spectra.line.table$Qualitative2, spectra.line.table$Qualitative3, spectra.line.table$Qualitative4, spectra.line.table$Quantitative, spectra.line.table$Sample)
-           colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Source", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Sample"))
+           colnames(ratio.frame) <-  c(input$elementratioa, input$elementratiob, input$elementratioc, input$elementratiod, "Cluster", "Source", "Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative", "Sample")
        }
        
        
        if(input$elipseplot2==TRUE){
            ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Source, spectra.line.table$Sample, spectra.line.table$Type)
-           colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Source", "Sample", "Type"))
+           colnames(ratio.frame) <- c(input$elementratioa, input$elementratiob, input$elementratioc, input$elementratiod, "Cluster", "Source", "Sample", "Type")
        }
        
        
@@ -4443,10 +4328,7 @@ secondDefaultSelect <- reactive({
        if(input$elipseplot2==TRUE){just.simulations <- subset(ratio.frame, Type=="Simulation")}
        if(input$elipseplot2==TRUE){just.simulations <- subset(just.simulations, Source==input$ratiosources)}
        
-       
-       ratio.frame <- subset(ratio.frame, !((ratio.frame[,1]/ratio.frame[,2]) <= input$xlimrangeratio[1] | (ratio.frame[,1]/ratio.frame[,2]) >= input$xlimrangeratio[2]))
-       
-       ratio.frame <- subset(ratio.frame, !((ratio.frame[,3]/ratio.frame[,4]) <= input$ylimrangeratio[1] | (ratio.frame[,3]/ratio.frame[,4]) >= input$ylimrangeratio[2]))
+     ratio.frame
        
    })
    
