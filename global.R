@@ -143,6 +143,34 @@ ifrm <- function(obj, env = globalenv()) {
     }
 }
 
+
+scree_crunch <- function(dataframe, dependent, independent){
+    
+    simple.frame <- data.frame(
+    newY = dataframe[,dependent]/max(dataframe[,dependent]),
+    newX = dataframe[,independent]/max(dataframe[,independent]))
+    
+    sims <-data.frame(
+    sims1 = seq(from=1, to=nrow(dataframe)-1, by=1),
+    sims2 = seq(from=2, to=nrow(dataframe), by=1)
+    )
+    
+    n <- seq(from=1, to=nrow(sims), by=1)
+    
+    lm.sims <- pbapply::pblapply(n, function(x) summary(lm(newY~newX, data=simple.frame[sims[,1][x]:sims[,2][x],])))
+    
+    
+    slopes <- unlist(pbapply::pblapply(n, function(x) as.vector(lm.sims[[x]]["coefficients"][[1]][2])))
+    
+    #rsquared <- unlist(pbapply::pblapply(n, function(x) as.vector(lm.sims[[x]]["r.squared"])))
+    
+    greater.1 <- which(abs(slopes) > 1)
+    
+    greater.1[length(greater.1)]+1
+    
+    
+}
+
 black.diamond <- read.csv("data/blackdiamond.csv", header=FALSE, sep=",")
 black.diamond.melt <- read.csv(file="data/blackdiamondmelt.csv")
 

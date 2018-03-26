@@ -191,6 +191,7 @@ mainPanel(
 tabsetPanel(
 id = 'dataset',
 tabPanel('All Data', dataTableOutput('mytable1')),
+tabPanel('Covariance', plotOutput('covarianceplot')),
 tabPanel('Add Categories', rHandsontableOutput('hot'))
 
 ))
@@ -236,7 +237,8 @@ uiOutput('clipsubsetfinal')
 mainPanel(
 tabsetPanel(
 id = 'dataset',
-tabPanel('Subsets', splitLayout(cellWidths=c("10%", "10%", "10%", "10%", "10%", "10%"),
+tabPanel('Covariance', plotOutput('covarianceplotsources'),
+splitLayout(cellWidths=c("10%", "10%", "10%", "10%", "10%", "10%"),
 uiOutput('qualSelect1a'),
 uiOutput('qualSelect2a'),
 uiOutput('qualSelect3a'),
@@ -286,7 +288,7 @@ fluidRow(
 sidebarLayout(
 
 sidebarPanel(
-numericInput("knum", label = "K-Means", value=3),
+uiOutput('knumui'),
 
 selectInput("pcacolour", "Colour", choices=c(
 "Black"="black",
@@ -343,6 +345,15 @@ uiOutput("hover_infopca")
 
 
 ),
+
+tabPanel("Optimal Clusters",
+div(
+style = "position:relative",
+plotOutput('optimalkplot',
+hover = hoverOpts("plot_hoveroptimalk", delay = 100, delayType = "debounce")),
+uiOutput("hover_infooptimalk"))
+),
+
 tabPanel("Table", DT::dataTableOutput('xrfpcatable'))
 
 )))))),
