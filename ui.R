@@ -21,12 +21,10 @@ downloadButton('downloadPlot', "Plot"),
 
 tags$hr(),
 
-fileInput('file1', 'Choose Spectra', multiple=TRUE,
-accept=c('text/csv',
-'text/comma-separated-values,text/plain',
-'.csv')),
+uiOutput('filegrab'),
 
-radioButtons("filetype", label=NULL, c("Spectra", "Net", "Spreadsheet"), selected="Spectra"),
+
+selectInput("filetype", label=NULL, c("PDZ", "CSV", "Net", "Spreadsheet"), selected="PDZ"),
 
 tags$hr(),
 

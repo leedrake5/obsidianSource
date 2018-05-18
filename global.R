@@ -38,6 +38,67 @@ Hodder.v <- function(y){
 }
 
 
+Rcpp::sourceCpp("pdz.cpp")
+
+readPDZ25Data <- function(filepath, filename){
+    
+    filename <- gsub(".pdz", "", filename)
+    filename.vector <- rep(filename, 2020)
+    
+    nbrOfRecords <- 2020
+    integers <- readPDZ25(filepath, start=481, size=nbrOfRecords)
+    
+    sequence <- seq(1, length(integers), 1)
+    
+    time.est <- integers[21]
+    
+    channels <- sequence
+    energy <- sequence*.02
+    counts <- integers/(integers[21]/10)
+    
+    data.frame(Energy=energy, CPS=counts, Sample=filename.vector)
+    
+}
+
+
+readPDZ24Data<- function(filepath, filename){
+    
+    filename <- gsub(".pdz", "", filename)
+    filename.vector <- rep(filename, 2020)
+    
+    nbrOfRecords <- 2020
+    integers <- readPDZ24(filepath, start=357, size=nbrOfRecords)
+    sequence <- seq(1, length(integers), 1)
+    
+    time.est <- integers[21]
+    
+    channels <- sequence
+    energy <- sequence*.02
+    counts <- integers/(integers[21]/10)
+    
+    data.frame(Energy=energy, CPS=counts, Sample=filename.vector)
+    
+}
+
+
+
+readPDZData <- function(filepath, filename) {
+    nbrOfRecords <- 10000
+    
+    
+    floats <- readBin(con=filepath, what="float", size=4, n=nbrOfRecords, endian="little")
+    
+    if(floats[[9]]=="5"){
+        readPDZ25Data(filepath, filename)
+    }else {
+        readPDZ24Data(filepath, filename)
+    }
+    
+    
+}
+
+
+
 
 read_csv_filename_x <- function(filename){
     ret <- read.csv(file=filename, sep=",", header=FALSE)
@@ -3995,7 +4056,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife( tree.dataframe, tree.source.list[[x]]), cl=6L)
     names(all.group.t) <- names(tree.source.list)
     
-    all.group <- ldply (all.group.t, data.frame)
+    all.group <- ldply(all.group.t, data.frame)
     colnames(all.group) <- c("Source", "t-value", "r-value", "Sample Overlap")
     all.group$Sample <- rep(names(tree.dataframe[,-1]), length(all.group.t))
     

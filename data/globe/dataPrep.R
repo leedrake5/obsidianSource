@@ -1,4 +1,5 @@
-
+library(data.table)
+library(SDMTools)
 #data.header <- header <- scan("/Users/lee/Dropbox/Documents/Global Obsidian/First Draft/Global Obsidian Database/Data-Table 1.csv", nlines = 1, what = character(), sep=",")
 data <- read.csv(file="data/globe/Data-Table 1.csv", skip=1, header=TRUE)
 #names(data) <- data.header
@@ -133,3 +134,22 @@ all.data <- merge(x=all.data[,!(names(all.data)) %in% c("n.x", "n.y")], y=summar
 rownames(all.data) <- all.data$Serial
 
 write.csv(all.data, file="data/globe/readydata.csv")
+
+factor_vector <- function(vector){
+    levels(as.factor(vector))
+}
+
+single.source <- subset(all.data, as.vector(all.data$Source.Common.Name)==as.vector(all.data$Source.General))
+multiple.source <- subset(all.data, as.vector(all.data$Source.Common.Name)!=as.vector(all.data$Source.General))
+
+multiple.source.list <- split(multiple.source, f=as.vector(multiple.source$Source.General))
+names(multiple.source.list) <- sort(unique(as.vector(multiple.source$Source.General)))
+
+
+
+
+
+element_extend <- function(mean, sd){
+    rnorm(1000, mean=mean, sd=sd)
+}
+
