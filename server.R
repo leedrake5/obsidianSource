@@ -31,7 +31,7 @@ shinyServer(function(input, output, session) {
         } else if(input$filetype=="Net") {
             fileInput('file1', 'Choose Net Counts', multiple=TRUE,
             accept=c(".csv"))
-        }  else if(input$filetype=="Spreadsheet") {
+        }  else if(dataType()=="Spreadsheet") {
             fileInput('file1', 'Choose Spreadsheet', multiple=TRUE,
             accept=c(".csv"))
         }  else if(input$filetype=="PDZ") {
@@ -49,7 +49,7 @@ shinyServer(function(input, output, session) {
         } else if(input$filetype=="Net") {
             fileInput('file2', 'Choose Net Counts', multiple=TRUE,
             accept=c(".csv"))
-        }  else if(input$filetype=="Spreadsheet") {
+        }  else if(dataType()=="Spreadsheet") {
             fileInput('file2', 'Choose Spreadsheet', multiple=TRUE,
             accept=c(".csv"))
         }  else if(input$filetype=="PDZ") {
@@ -100,7 +100,7 @@ shinyServer(function(input, output, session) {
         } else if(input$filetype=="Net") {
             fileInput('file3', 'Choose Net Counts', multiple=TRUE,
             accept=c(".csv"))
-        }  else if(input$filetype=="Spreadsheet") {
+        }  else if(dataType()=="Spreadsheet") {
             fileInput('file3', 'Choose Spreadsheet', multiple=TRUE,
             accept=c(".csv"))
         }  else if(input$filetype=="PDZ") {
@@ -140,6 +140,8 @@ shinyServer(function(input, output, session) {
             "Spectra"
         } else if(input$filetype=="Net"){
             "Net"
+        } else if(input$filetype=="Spreadsheet"){
+            "Spreadsheet"
         }
         
     })
@@ -1625,7 +1627,7 @@ shinyServer(function(input, output, session) {
                 fullSpectra()
             } else if(dataType()=="Net"){
                 netCounts()
-            }else if(input$filetype=="Spreadsheet"){
+            }else if(dataType()=="Spreadsheet"){
                 importSpreadsheet()
             }
             
@@ -1927,7 +1929,7 @@ spectral.plot
                  }else if(is.null(input$file2)==FALSE && is.null(input$file3)==FALSE){
                      merge(merge(first.instrument, second.instrument, all=TRUE), third.instrument, all=TRUE)
                  }
-             }  else if(input$filetype=="Spreadsheet"){
+             }  else if(dataType()=="Spreadsheet"){
                  importSpreadsheet()
              }
              
@@ -1972,9 +1974,9 @@ spectral.plot
                  colnames(spectra.line.table)
              } else if(input$usecalfile==TRUE && dataType()=="Spectra"){
                  quantified
-             }else if(input$usecalfile==TRUE && dataType()=="Net"){
+             } else if(input$usecalfile==TRUE && dataType()=="Net"){
                  quantified
-             } else if(input$filetype=="Spreadsheet"){
+             } else if(dataType()=="Spreadsheet"){
                  colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
              }
              
@@ -1986,17 +1988,10 @@ spectral.plot
              if(input$usecalfile==TRUE){quantified <- colnames(dataMerge()[ ,!(colnames(dataMerge()) =="Sample")])
              }
              
-             standard <- if(input$usecalfile==FALSE && dataType()=="Spectra"){
-                 c("Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
-             } else if(input$usecalfile==FALSE && dataType()=="Net"){
-                 colnames(spectra.line.table)
-             } else if(input$usecalfile==TRUE && dataType()=="Spectra"){
-                 quantified
-             }else if(input$usecalfile==TRUE && dataType()=="Net"){
-                 quantified
-             } else if(input$filetype=="Spreadsheet"){
-                 colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
-             }
+             
+             colnames(spectra.line.table)[colnames(spectra.line.table) %in% c("Rb", "Sr", "Y", "Zr", "Nb")]
+             
+ 
              
          })
          
@@ -2007,7 +2002,7 @@ spectral.plot
              
              
              checkboxGroupInput('show_vars', 'Elemental lines to show:',
-             choices=lineOptions(), selected = lineOptions())
+             choices=lineOptions(), selected = defaultLines())
          })
          
 
@@ -2264,8 +2259,8 @@ choiceLines <- reactive({
         colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
     } else if(dataType()=="Net"){
         colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
-    } else if(input$filetype=="Spreadsheet"){
-        colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
+    } else if(dataType()=="Spreadsheet"){
+        colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])[colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")]) %in% c("Rb", "Sr", "Y", "Zr", "Nb")]
     }
     
 })
@@ -2283,6 +2278,22 @@ choiceLines <- reactive({
   
   
   #Source Manager
+  
+  
+  allData <- reactive({
+      
+      if(input$obsidiandatabase=="All Subsources"){
+          read.csv(file="data/globe/readydata.csv", row.names=1)
+      } else if(input$obsidiandatabase=="Source Groups"){
+          read.csv(file="data/globe/readydatageneral.csv", row.names=1)
+      } else if(input$obsidiandatabase=="All Qualified Subsources"){
+          read.csv(file="data/globe/readydatasub.csv", row.names=1)
+      } else if(input$obsidiandatabase=="Qualified Source Groups"){
+          read.csv(file="data/globe/readydatageneralsub.csv", row.names=1)
+      }
+
+      
+  })
   
   output$minlat <- renderUI({
       if(input$regionselect=="Lat/Long")
@@ -2319,7 +2330,7 @@ choiceLines <- reactive({
   
   output$choosecountry <- renderUI({
       if(input$regionselect=="Political"){
-          selectInput('selectcountry', "Choose Country", choices=unique(all.data$Country), selected="USA", multiple=TRUE)
+          selectInput('selectcountry', "Choose Country", choices=unique(allData()$Country), selected="USA", multiple=TRUE)
       }else{
           p()
       }
@@ -2328,7 +2339,7 @@ choiceLines <- reactive({
   output$choosestate <- renderUI({
       if(input$regionselect=="Political"){
           
-          subset.state <- dplyr::filter(all.data,
+          subset.state <- dplyr::filter(allData(),
           Country %in% input$selectcountry
           )
           
@@ -2340,7 +2351,7 @@ choiceLines <- reactive({
   
   output$choosecontinent <- renderUI({
       if(input$regionselect=="Continent"){
-          selectInput('selectcontinent', "Choose Continent", choices=unique(all.data$Continent), selected="North America", multiple=TRUE)
+          selectInput('selectcontinent', "Choose Continent", choices=unique(allData()$Continent), selected="North America", multiple=TRUE)
       }else{
           p()
       }
@@ -2348,7 +2359,7 @@ choiceLines <- reactive({
   
   output$chooseregion <- renderUI({
        if(input$regionselect=="Region"){
-           selectInput('selectregion', "Choose Region", choices=unique(all.data$Region.Plate), selected="Colorado Plateau", multiple=TRUE)
+           selectInput('selectregion', "Choose Region", choices=unique(allData()$Region.Plate), selected="Colorado Plateau", multiple=TRUE)
        }else{
            p()
        }
@@ -2357,7 +2368,7 @@ choiceLines <- reactive({
   
   output$source.names <- renderUI({
       if(input$regionselect==c("Region", "Continent", "Political")){
-          selectInput('selectregion', "Choose Sources", choices=unique(all.data$Region.Plate), selected="Colorado Plateau", multiple=TRUE)
+          selectInput('selectregion', "Choose Sources", choices=unique(allData()$Region.Plate), selected="Colorado Plateau", multiple=TRUE)
       }else{
           p()
       }
@@ -2374,11 +2385,11 @@ yearSequence <- reactive({
   
   sourcePrep <- reactive({
       Year <- yearSequence()
+      all.data <- allData()
       
-      
-      all.data$Latitude <- as.numeric(as.character(all.data$Latitude))
-      all.data$Longitude <- as.numeric(as.character(all.data$Longitude))
-      all.data$Sources <- make.names(all.data$Source.Common.Name, unique=TRUE)
+      all.data$Latitude <- as.numeric(as.character(allData()$Latitude))
+      all.data$Longitude <- as.numeric(as.character(allData()$Longitude))
+      all.data$Sources <- make.names(allData()$Source.Common.Name, unique=TRUE)
       
       region.data <- if(input$regionselect=="Lat/Long"){
           dplyr::filter(all.data,
@@ -3817,7 +3828,7 @@ secondDefaultSelect <- reactive({
           colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
       } else if(dataType()=="Net"){
           colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
-      } else if(input$filetype=="Spreadsheet"){
+      } else if(dataType()=="Spreadsheet"){
           colnames(spectra.line.table[ ,!(colnames(spectra.line.table) == "Sample")])
       }
       
@@ -4548,7 +4559,7 @@ ternaryChooseA <- reactive({
         "Al.K.alpha"
     } else if(dataType()=="Net"){
         spectra.line.names[2]
-    } else if (input$filetype=="Spreadsheet"){
+    } else if (dataType()=="Spreadsheet"){
         spectra.line.names[2]
     }
     
@@ -4565,7 +4576,7 @@ ternaryChooseB <- reactive({
         "Si.K.alpha"
     } else if(dataType()=="Net"){
         spectra.line.names[3]
-    } else if (input$filetype=="Spreadsheet"){
+    } else if (dataType()=="Spreadsheet"){
         spectra.line.names[3]
     }
     
@@ -4582,7 +4593,7 @@ ternaryChooseC <- reactive({
         "Ca.K.alpha"
     } else if(dataType()=="Net"){
         spectra.line.names[4]
-    } else if (input$filetype=="Spreadsheet"){
+    } else if (dataType()=="Spreadsheet"){
         spectra.line.names[4]
     }
     

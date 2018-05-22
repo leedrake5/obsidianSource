@@ -207,6 +207,7 @@ sidebarLayout(
 
 sidebarPanel(
 downloadButton("downloadsubsetfinal", label = "Download"),
+selectInput('obsidiandatabase', "Select Database", choices=c("All Subsources", "All Source Groups", "Qualified Subsources", "Qualified Source Groups"), selected="Qualified Source Groups"),
 selectInput('regionselect', "Define Region", choices=c("Lat/Long", "Continent", "Region", "Political"), selected="Political"),
 uiOutput('minlat'),
 uiOutput('maxlat'),

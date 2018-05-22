@@ -4,11 +4,13 @@ library(SDMTools)
 setwd("~/GitHub/obsidianSource")
 #data.header <- header <- scan("/Users/lee/Dropbox/Documents/Global Obsidian/First Draft/Global Obsidian Database/Data-Table 1.csv", nlines = 1, what = character(), sep=",")
 data <- read.csv(file="data/globe/Data-Table 1.csv", skip=1, header=TRUE)
+data <- subset(data, Literature.Rank==10)
 #names(data) <- data.header
 
 metadata <- read.csv(file="data/globe/Master List-Table 1.csv")
 
 simp.data <- subset(data, select = -c(Literature, m, m.1, m.2,m.3, m.4, m.5, m.6, m.7, m.8, m.9, m.10, m.11, m.12, m.13, m.14, m.15, m.16, m.17, s, s.1, s.2,s.3, s.4, s.5, s.6, s.7, s.8, s.9, s.10, s.11, s.12, s.13, s.14, s.15, s.16, s.17, Sample, Source, Type, X, X.1, Method) )
+
 
 simpler.data <- subset(data, select = -c(Literature, m, m.1, m.2,m.3, m.4, m.5, m.6, m.7, m.8, m.9, m.10, m.11, m.12, m.13, m.14, m.15, m.16, m.17, s, s.1, s.2,s.3, s.4, s.5, s.6, s.7, s.8, s.9, s.10, s.11, s.12, s.13, s.14, s.15, s.16, s.17, Sample, Source, Type, X, X.1, Method, Serial, n) )
 
@@ -135,7 +137,7 @@ all.data <- merge(x=metadata, y=summary.data, by.x="Serial", by.y="Serial", all=
 all.data <- merge(x=all.data[,!(names(all.data)) %in% c("n.x", "n.y")], y=summary.n.dat, by.x="Serial", by.y="Serial", all=TRUE, sort=FALSE)
 rownames(all.data) <- all.data$Serial
 
-write.csv(all.data, file="data/globe/readydata.csv")
+write.csv(all.data, file="data/globe/readydatasub.csv")
 
 factor_vector <- function(vector){
     levels(as.factor(vector))

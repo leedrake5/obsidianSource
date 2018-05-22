@@ -4149,7 +4149,6 @@ source.replicate <- function(source, data, elements){
 #####Read Obsidian Data
 
 #source(file="data/globe/dataPrep.R")
-all.data <- read.csv(file="data/globe/readydata.csv", row.names=1)
 
 #no_cores <- detectCores() - 2
 #cl<-makeCluster(no_cores)
