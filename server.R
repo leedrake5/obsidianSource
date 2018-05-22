@@ -2284,9 +2284,9 @@ choiceLines <- reactive({
       
       if(input$obsidiandatabase=="All Subsources"){
           read.csv(file="data/globe/readydata.csv", row.names=1)
-      } else if(input$obsidiandatabase=="Source Groups"){
+      } else if(input$obsidiandatabase=="All Source Groups"){
           read.csv(file="data/globe/readydatageneral.csv", row.names=1)
-      } else if(input$obsidiandatabase=="All Qualified Subsources"){
+      } else if(input$obsidiandatabase=="Qualified Subsources"){
           read.csv(file="data/globe/readydatasub.csv", row.names=1)
       } else if(input$obsidiandatabase=="Qualified Source Groups"){
           read.csv(file="data/globe/readydatageneralsub.csv", row.names=1)
