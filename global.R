@@ -3738,7 +3738,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
     
     #clusterExport(cl, library(parallel))
     
-    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife( tree.dataframe, tree.source.list[[x]]), cl=6L)
+    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife( tree.dataframe, tree.source.list[[x]]))
     names(all.group.t) <- names(tree.source.list)
     
     all.group <- ldply(all.group.t, data.frame)
@@ -4053,7 +4053,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     
     #clusterExport(cl, library(parallel))
     
-    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife( tree.dataframe, tree.source.list[[x]]), cl=6L)
+    all.group.t <- pblapply(names(tree.source.list), function(x) apply_treeJackKnife( tree.dataframe, tree.source.list[[x]]))
     names(all.group.t) <- names(tree.source.list)
     
     all.group <- ldply(all.group.t, data.frame)

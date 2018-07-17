@@ -176,6 +176,10 @@ downloadButton('downloadData', "Table"),
 
 tags$hr(),
 
+checkboxInput('asppm', "Convert to ppm", value=FALSE),
+
+tags$hr(),
+
 conditionalPanel(
 condition='input.dataset === spectra.line.table',
 uiOutput('defaultlines')
@@ -207,7 +211,7 @@ sidebarLayout(
 
 sidebarPanel(
 downloadButton("downloadsubsetfinal", label = "Download"),
-selectInput('obsidiandatabase', "Select Database", choices=c("All Subsources", "All Source Groups", "Qualified Subsources", "Qualified Source Groups"), selected="Qualified Source Groups"),
+selectInput('obsidiandatabase', "Select Database", choices=c("All Subsources", "All Source Groups", "Qualified Subsources", "Qualified Source Groups"), selected="All Source Groups"),
 selectInput('regionselect', "Define Region", choices=c("Lat/Long", "Continent", "Region", "Political"), selected="Political"),
 uiOutput('minlat'),
 uiOutput('maxlat'),
@@ -256,6 +260,7 @@ sidebarLayout(
 
 sidebarPanel(
 downloadButton('sourcelistresults', "Excel"),
+downloadButton('sourceartifacts', "CSV"),
 downloadButton('sourcelistresultsraw', "Raw"),
 downloadButton('downloadsourcemap', "Map"),
 

@@ -2010,6 +2010,12 @@ spectral.plot
  tableInput <- reactive({
      spectra.line.table <- dataMerge()
      select.line.table <- spectra.line.table[, c("Sample", input$show_vars), drop = FALSE]
+     
+      if(input$asppm==TRUE){
+          select.line.table <- data.frame(Sample=select.line.table$Sample, spectra.line.table[,-1]*10000)
+      }
+
+     
      select.line.table
  })
 
@@ -2797,6 +2803,15 @@ yearSequence <- reactive({
       data.table(dataMerge3()[,!names(dataMerge3()) %in% c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative")])
       
   })
+  
+  output$sourceartifacts <- downloadHandler(
+  filename = function() { paste(paste(c(input$projectname, "_", "SourcedArtifacts"), collapse=''), '.csv', sep=',') },
+  content = function(file
+  ) {
+      write.csv(dataMerge3(), file)
+  }
+  )
+      
   
   
 
