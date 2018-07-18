@@ -3616,12 +3616,17 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
             (mean-((mean*sensitivity))) < x & x < (mean+((mean*sensitivity)))
         }
         
+        
         in_interval_vector <- function(vector, mean, sensitivity){
             
             sub_interval_vector <- function(vector, mean, sensitivity){
                 year.s <- seq(1, length(vector), 1)
                 the.match <- sapply(year.s,  function(x) in_interval_value(vector[x], mean[x,2], sensitivity=sensitivity))
-                any(the.match)
+                if(tolerance==TRUE){
+                    any(the.match)
+                } else if(tolerance==FALSE){
+                    all(the.match)
+                }
             }
             
             if(length(vector)!=0){
@@ -3839,7 +3844,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
             source.hold[i] <- paste(origional.columns[logic.frame[i,, drop=FALSE]], collapse=", ")
         }
         
-        source.hold
+        source.hold[! source.hold %in% "SourceValue"]
         
     }
     
@@ -3957,7 +3962,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
 }
 
 
-obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list, sensitivity) {
+obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list, sensitivity, tolerance) {
     
     treeJackKnife <- function(tree.dataframe, tree.source) {
         
@@ -3979,7 +3984,11 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
             sub_interval_vector <- function(vector, mean, sensitivity){
                 year.s <- seq(1, length(vector), 1)
                 the.match <- sapply(year.s,  function(x) in_interval_value(vector[x], mean[x,2], sensitivity=sensitivity))
-                any(the.match)
+                if(tolerance==TRUE){
+                    any(the.match)
+                } else if(tolerance==FALSE){
+                    all(the.match)
+                }
             }
             
             if(length(vector)!=0){
@@ -4197,8 +4206,8 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
             source.hold[i] <- paste(origional.columns[logic.frame[i,, drop=FALSE]], collapse=", ")
         }
         
-        source.hold
-        
+        source.hold[! source.hold %in% "SourceValue"]
+
     }
     
     temp.sources <- is.sig.col(p.values)
@@ -4206,7 +4215,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     temp.source.value <- apply(p.values[,-1],1,base::min, na.rm=TRUE)
     
 
-    p.values$Source <- temp.sources
+    p.values$Source <- temp.source[! temp.source %in% "SourceValue"]
     
     p.values$SourceValue <- temp.source.value
     

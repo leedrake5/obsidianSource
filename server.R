@@ -2610,9 +2610,9 @@ yearSequence <- reactive({
 
       
        result.list <- if(input$bayesian==TRUE){
-           obsidianJackKnifeMultipleSourceProb(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, tree.metadata=tree.metadata, source.metadata=source.metadata, sensitivity=sensitivity)
+           obsidianJackKnifeMultipleSourceProb(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, tree.metadata=tree.metadata, source.metadata=source.metadata, sensitivity=sensitivity, tolerance=input$tolerance)
        } else if(input$bayesian==FALSE){
-            obsidianJackKnifeMultipleSourceSimp(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, sensitivity=sensitivity)
+            obsidianJackKnifeMultipleSourceSimp(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, sensitivity=sensitivity, tolerance=input$tolerance)
        }
        
        incProgress(1/n)
