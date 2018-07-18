@@ -2468,7 +2468,15 @@ yearSequence <- reactive({
   })
   
 
-  
+output$sensitivityui <- renderUI({
+    
+    if(input$tolerance==TRUE){
+        numericInput('sensitivity', "Model Sensitivity", min=0.01, max=0.99, step=0.01, value=0.15)
+    } else if(input$tolerance==FALSE){
+        numericInput('sensitivity', "Model Sensitivity", min=0.01, max=0.99, step=0.01, value=0.5)
+    }
+    
+})
   
   
   sourceList <- reactive({
