@@ -3795,13 +3795,56 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
     
     
     
-    p.values$Source <- colnames(p.values[,-1])[as.numeric(unname(as.vector(apply(p.values[,-1],1,which.min))))]
+    temp.source <- colnames(p.values[,-1])[as.numeric(unname(as.vector(apply(p.values[,-1],1,which.min))))]
+    
+    is.sig <- function(p.value){
+        
+        if(length(p.value)==1 && !is.na(p.value)){
+            p.value <0.05
+        } else if(length(p.value)==1 && is.na(p.value)){
+            FALSE
+        } else if(length(p.value)!=1){
+            FALSE
+        }
+    }
     
     
-    p.values$SourceValue <- apply(p.values[,-1],1,base::min, na.rm=TRUE)
+    
+    is.sig.vec <- function(p.values){
+        
+        first <- as.vector(sapply(p.values, is.sig))
+        first[is.na(first)] <- FALSE
+        first
+    }
+    
+    is.sig.col <- function(p.value.frame){
+        
+        p.value.frame[is.na(p.value.frame)] <- 1
+        
+        logic.frame <- apply(p.value.frame[,-1], 2, is.sig.vec)
+        
+        origional.columns <- colnames(p.value.frame[,-1])
+        
+        source.hold <- rep("", length(p.value.frame[,1]))
+        
+        for(i in 1:length(p.value.frame[,1])){
+            source.hold[i] <- paste(origional.columns[logic.frame[i,, drop=FALSE]], collapse=", ")
+        }
+        
+        source.hold
+        
+    }
+    
+    temp.sources <- is.sig.col(p.values)
+    
+    temp.source.value <- apply(p.values[,-1],1,base::min, na.rm=TRUE)
     
     
+    p.values$Source <- temp.source
     
+    p.values$SourceValue <- temp.source.value
+    
+    p.values$PossibleSources <- temp.sources
     
     
     
@@ -3983,13 +4026,13 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
             n <- length(ls(tree.a.re))
             
             
-            group.lm.r2 <- apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(x~source))$r.squared))
+            group.lm.r2 <- apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(scale(x)[,1]~scale(source)[,1]))$r.squared))
             group.lm.r2[group.lm.r2==1] <- .99999
             
             
             group.lm.r <- sqrt(group.lm.r2)
             
-            group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(x~source))$residuals)))
+            group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(scale(x)[,1]~scale(source)[,1]))$residuals)))
             
             group.t <- sqrt(group.lm.r2)*sqrt(group.lm.res.n-2)/sqrt(1-group.lm.r2)
             
@@ -4110,11 +4153,57 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     
     
     
-    p.values$Source <- colnames(p.values[,-1])[as.numeric(unname(as.vector(apply(p.values[,-1],1,which.min))))]
+    temp.source <- colnames(p.values[,-1])[as.numeric(unname(as.vector(apply(p.values[,-1],1,which.min))))]
+    
+    is.sig <- function(p.value){
+        
+        if(length(p.value)==1 && !is.na(p.value)){
+            p.value <0.05
+        } else if(length(p.value)==1 && is.na(p.value)){
+            FALSE
+        } else if(length(p.value)!=1){
+            FALSE
+        }
+    }
     
     
-    p.values$SourceValue <- apply(p.values[,-1],1,base::min, na.rm=TRUE)
     
+    is.sig.vec <- function(p.values){
+        
+        first <- as.vector(sapply(p.values, is.sig))
+        first[is.na(first)] <- FALSE
+        first
+    }
+    
+    is.sig.col <- function(p.value.frame){
+        
+        p.value.frame[is.na(p.value.frame)] <- 1
+        
+        logic.frame <- apply(p.value.frame[,-1], 2, is.sig.vec)
+        
+        origional.columns <- colnames(p.value.frame[,-1])
+        
+        source.hold <- rep("", length(p.value.frame[,1]))
+        
+        for(i in 1:length(p.value.frame[,1])){
+            source.hold[i] <- paste(origional.columns[logic.frame[i,, drop=FALSE]], collapse=", ")
+        }
+        
+        source.hold
+        
+    }
+    
+    temp.sources <- is.sig.col(p.values)
+    
+    temp.source.value <- apply(p.values[,-1],1,base::min, na.rm=TRUE)
+    
+
+    p.values$Source <- temp.sources
+    
+    p.values$SourceValue <- temp.source.value
+    
+    p.values$PossibleSources <- temp.sources
+
     
     
     #forsave <- data.frame(posterior.table["Specimen"], posterior.table["Source"], posterior.table["SourcePosterior"])
