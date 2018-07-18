@@ -2022,7 +2022,7 @@ spectral.plot
 
   output$mytable1 <- renderDataTable({
    
-  data.table(tableInput())
+   round_df(tableInput(), 2)
 
   })
   
@@ -2802,7 +2802,7 @@ yearSequence <- reactive({
   
   output$sourcedTable <- renderDataTable({
       
-      data.table(dataMerge3()[,!names(dataMerge3()) %in% c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative")])
+      round_df(dataMerge3()[,!names(dataMerge3()) %in% c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative")], 2)
       
   })
   
