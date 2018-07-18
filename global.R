@@ -3772,7 +3772,8 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
     t.value$SourceValue <- apply(t.value, 1, max, na.rm=TRUE)
     scaled.max.value <- apply(scaled.t, 1, max, na.rm=TRUE)
     t.value$Source <- colnames(t.value)[apply(t.value,1,which.max)]
-    
+    t.value$Source[t.value$Source == "SourceValue"] <- ""
+
     
     
     t.value$ZScore <- (scaled.max.value-scaled.mean)/scaled.sd
@@ -3852,6 +3853,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
     
     temp.source.value <- apply(p.values[,-1],1,base::min, na.rm=TRUE)
     
+    temp.source[temp.source == "SourceValue"] <- ""
     
     p.values$Source <- temp.source
     
@@ -4134,7 +4136,8 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     t.value$SourceValue <- apply(t.value, 1, max, na.rm=TRUE)
     scaled.max.value <- apply(scaled.t, 1, max, na.rm=TRUE)
     t.value$Source <- colnames(t.value)[apply(t.value,1,which.max)]
-    
+    t.value$Source[t.value$Source == "SourceValue"] <- ""
+
     
     
     t.value$ZScore <- (scaled.max.value-scaled.mean)/scaled.sd
@@ -4215,7 +4218,11 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     temp.source.value <- apply(p.values[,-1],1,base::min, na.rm=TRUE)
     
 
+
     p.values$Source <- temp.source[! temp.source %in% "SourceValue"]
+    
+    p.values$Source[p.values$Source == "SourceValue"] <- ""
+
     
     p.values$SourceValue <- temp.source.value
     
