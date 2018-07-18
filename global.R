@@ -3859,7 +3859,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
     
     p.values$SourceValue <- temp.source.value
     
-    p.values$PossibleSources <- temp.sources
+    p.values$SignificantMatches <- temp.sources
     
     
     
@@ -4226,7 +4226,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     
     p.values$SourceValue <- temp.source.value
     
-    p.values$PossibleSources <- temp.sources
+    p.values$SignificantMatches <- temp.sources
 
     
     

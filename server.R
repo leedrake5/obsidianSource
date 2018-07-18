@@ -2820,10 +2820,10 @@ output$sensitivityui <- renderUI({
       #origional.data$Serial <- obsidianSource()[["Posterior Probabilities"]]["Serial"]
       if(input$bayesian==TRUE){
           origional.data$Source <- unlist(obsidianSource()[["Posterior Probabilities"]]["Source"])
-          origional.data$PossibleSources <- unlist(obsidianSource()[["p-Value"]]["PossibleSources"])
+          origional.data$SignificantMatches <- unlist(obsidianSource()[["p-Value"]]["SignificantMatches"])
       } else if(input$bayesian==FALSE){
           origional.data$Source <- unlist(obsidianSource()[["T-Value"]]["Source"])
-          origional.data$PossibleSources <- unlist(obsidianSource()[["p-Value"]]["PossibleSources"])
+          origional.data$SignificantMatches <- unlist(obsidianSource()[["p-Value"]]["SignificantMatches"])
       }
       
       newest.data <- data.frame(origional.data, quality.table[,c("Qualitative1", "Qualitative2", "Qualitative3", "Qualitative4", "Quantitative")])

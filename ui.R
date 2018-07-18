@@ -229,7 +229,7 @@ tags$hr(),
 uiOutput('sensitivityui'),
 checkboxInput('tolerance', "Accept elements outside sensitivity", value=TRUE),
 checkboxInput('bayesian', "Use Lat/Long as Prior", value=FALSE),
-checkboxInput('constraindata', "Limit to Complete Source Data", value=TRUE),
+checkboxInput('constraindata', "Limit to Complete Source Data", value=FALSE),
 
 tags$hr(),
 
