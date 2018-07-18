@@ -2618,9 +2618,9 @@ output$sensitivityui <- renderUI({
 
       
        result.list <- if(input$bayesian==TRUE){
-           obsidianJackKnifeMultipleSourceProb(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, tree.metadata=tree.metadata, source.metadata=source.metadata, sensitivity=sensitivity, tolerance=input$tolerance)
+           obsidianJackKnifeMultipleSourceProb(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, tree.metadata=tree.metadata, source.metadata=source.metadata, sensitivity=sensitivity, tolerance=input$tolerance, scale=input$scale)
        } else if(input$bayesian==FALSE){
-            obsidianJackKnifeMultipleSourceSimp(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, sensitivity=sensitivity, tolerance=input$tolerance)
+            obsidianJackKnifeMultipleSourceSimp(tree.dataframe=tree.dataframe, tree.source.list=tree.source.list, sensitivity=sensitivity, tolerance=input$tolerance, scale=input$scale)
        }
        
        incProgress(1/n)

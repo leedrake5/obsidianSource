@@ -3599,7 +3599,7 @@ prior_function_frame <- function(source.metadata, tree.metadata){
 
 
 
-obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.source.list, tree.metadata, source.metadata, sensitivity) {
+obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.source.list, tree.metadata, source.metadata, sensitivity, scale) {
     
     treeJackKnife <- function(tree.dataframe, tree.source) {
         
@@ -3644,7 +3644,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
         tree.source.check <- in_interval_vector(vector=tree.dataframe[,2], mean=tree.source, sensitivity=sensitivity)
         
         
-        treeJackKnifeOrigional <- function(tree.dataframe, tree.source) {
+        treeJackKnifeOrigional <- function(tree.dataframe, tree.source, scale) {
             time <- tree.dataframe$Year
             
             tree.a <- tree.dataframe[match(time, tree.dataframe$Year, nomatch=0),]
@@ -3681,13 +3681,23 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
             n <- length(ls(tree.a.re))
             
             
-            group.lm.r2 <- apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(x~source))$r.squared))
+            #group.lm.r2 <- apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(scale(x)[,1]~scale(source)[,1]))$r.squared))
+            group.lm.r2 <- if(scale==FALSE){
+                apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(x~source))$r.squared))
+            } else if(scale==TRUE){
+                apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(scale(x)[,1]~scale(source)[,1]))$r.squared))
+            }
             group.lm.r2[group.lm.r2==1] <- .99999
             
             
             group.lm.r <- sqrt(group.lm.r2)
             
-            group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(x~source))$residuals)))
+            #group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(scale(x)[,1]~scale(source)[,1]))$residuals)))
+            group.lm.res.n <- if(scale==FALSE){
+                apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(x~source))$residuals)))
+            } else if(scale==TRUE){
+                group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(scale(x)[,1]~scale(source)[,1]))$residuals)))
+            }
             
             group.t <- sqrt(group.lm.r2)*sqrt(group.lm.res.n-2)/sqrt(1-group.lm.r2)
             
@@ -3701,7 +3711,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
         colnames(null.frame) <- c("t-value", "r-value", "Sample Overlap")
         
         if(tree.source.check==TRUE){
-            return(treeJackKnifeOrigional(tree.dataframe=tree.dataframe, tree.source=tree.source))
+            return(treeJackKnifeOrigional(tree.dataframe=tree.dataframe, tree.source=tree.source, scale=scale))
         } else if(tree.source.check==FALSE){
             return(null.frame)
         } else if(is.na(tree.source.check)==TRUE){
@@ -3964,7 +3974,7 @@ obsidianJackKnifeMultipleSourceProb <- function(time, tree.dataframe, tree.sourc
 }
 
 
-obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list, sensitivity, tolerance) {
+obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list, sensitivity, tolerance, scale) {
     
     treeJackKnife <- function(tree.dataframe, tree.source) {
         
@@ -4008,7 +4018,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
         tree.source.check <- in_interval_vector(vector=tree.dataframe[,2], mean=tree.source, sensitivity=sensitivity)
         
         
-        treeJackKnifeOrigional <- function(tree.dataframe, tree.source) {
+        treeJackKnifeOrigional <- function(tree.dataframe, tree.source, scale) {
             time <- tree.dataframe$Year
             
             tree.a <- tree.dataframe[match(time, tree.dataframe$Year, nomatch=0),]
@@ -4045,14 +4055,24 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
             n <- length(ls(tree.a.re))
             
             
-            group.lm.r2 <- apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(scale(x)[,1]~scale(source)[,1]))$r.squared))
+            #group.lm.r2 <- apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(scale(x)[,1]~scale(source)[,1]))$r.squared))
+            group.lm.r2 <- if(scale==FALSE){
+                apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(x~source))$r.squared))
+            } else if(scale==TRUE){
+                apply(tree.a.re.re, 2, function(x) as.vector(summary(lm(scale(x)[,1]~scale(source)[,1]))$r.squared))
+            }
             group.lm.r2[group.lm.r2==1] <- .99999
             
             
             group.lm.r <- sqrt(group.lm.r2)
             
-            group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(scale(x)[,1]~scale(source)[,1]))$residuals)))
-            
+            #group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(scale(x)[,1]~scale(source)[,1]))$residuals)))
+            group.lm.res.n <- if(scale==FALSE){
+                apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(x~source))$residuals)))
+            } else if(scale==TRUE){
+                group.lm.res.n <- apply(tree.a.re.re, 2, function(x) as.numeric(length(summary(lm(scale(x)[,1]~scale(source)[,1]))$residuals)))
+            }
+
             group.t <- sqrt(group.lm.r2)*sqrt(group.lm.res.n-2)/sqrt(1-group.lm.r2)
             
             
@@ -4065,7 +4085,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
         colnames(null.frame) <- c("t-value", "r-value", "Sample Overlap")
         
         if(tree.source.check==TRUE){
-            return(treeJackKnifeOrigional(tree.dataframe=tree.dataframe, tree.source=tree.source))
+            return(treeJackKnifeOrigional(tree.dataframe=tree.dataframe, tree.source=tree.source, scale=scale))
         } else if(tree.source.check==FALSE){
             return(null.frame)
         } else if(is.na(tree.source.check)==TRUE){
@@ -4219,7 +4239,7 @@ obsidianJackKnifeMultipleSourceSimp <- function(tree.dataframe, tree.source.list
     
 
 
-    p.values$Source <- temp.source[! temp.source %in% "SourceValue"]
+    p.values$Source <- temp.source
     
     p.values$Source[p.values$Source == "SourceValue"] <- ""
 
