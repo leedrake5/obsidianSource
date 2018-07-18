@@ -2463,7 +2463,7 @@ yearSequence <- reactive({
   
   output$source_frame <- renderDataTable({
     
-        round_df(sourcePrep()[, c("Source.Common.Name",  paste0("Mean", input$show_vars, sep=""), paste0("SD", input$show_vars, sep=""), "n", "Bibliographies")], 2)
+        round_df(sourcePrep()[, c("Source.Common.Name",  paste0("Mean", input$show_vars, sep=""),  "n", "Bibliographies")], 2)
       
   })
   
