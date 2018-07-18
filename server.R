@@ -2442,6 +2442,31 @@ yearSequence <- reactive({
       
   })
   
+  
+  
+  sourceFrame <- reactive({
+      
+      region.data <- sourcePrep()
+      
+      short.source <- region.data[, c("Source.Common.Name", paste0("Mean", input$show_vars, sep=""))]
+      colnames(short.source) <- c("Sources", input$show_vars)
+      short.source$Sources <- make.names(short.source$Sources, unique=TRUE)
+      short.source <- short.source[order(short.source$Sources),]
+      short.source[short.source <= 0] <- NA
+      if(input$constraindata==TRUE){
+          short.source <- short.source[complete.cases(short.source),]
+      }
+      
+      
+  })
+  
+  
+  output$source_frame <- renderDataTable({
+    
+        round_df(sourcePrep()[, c("Source.Common.Name",  paste0("Mean", input$show_vars, sep=""), paste0("SD", input$show_vars, sep=""), "n", "Bibliographies")], 2)
+      
+  })
+  
 
   
   
@@ -2452,16 +2477,15 @@ yearSequence <- reactive({
 
       
       region.data <- sourcePrep()
-     
-      short.source <- region.data[, c("Source.Common.Name", paste0("Mean", input$show_vars, sep=""))]
-      colnames(short.source) <- c("Sources", input$show_vars)
-      short.source$Sources <- make.names(short.source$Sources, unique=TRUE)
-      short.source <- short.source[order(short.source$Sources),]
-      short.source[short.source <= 0] <- NA
-      if(input$constraindata==TRUE){
-          short.source <- short.source[complete.cases(short.source),]
-      }
       
+     short.source <- region.data[, c("Source.Common.Name", paste0("Mean", input$show_vars, sep=""))]
+     colnames(short.source) <- c("Sources", input$show_vars)
+     short.source$Sources <- make.names(short.source$Sources, unique=TRUE)
+     short.source <- short.source[order(short.source$Sources),]
+     short.source[short.source <= 0] <- NA
+     if(input$constraindata==TRUE){
+         short.source <- short.source[complete.cases(short.source),]
+     }
       temp.source <- short.source[,c(input$show_vars)]
       
       temp.source.t <- t(temp.source)

@@ -248,7 +248,8 @@ uiOutput('qualSelect3a'),
 uiOutput('qualSelect4a')
 )
 ),
-tabPanel('Data', dataTableOutput('mydatamerge2'))
+tabPanel('Data', dataTableOutput('mydatamerge2')),
+tabPanel('Source Data', dataTableOutput('source_frame'))
 )
 )))),
 
