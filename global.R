@@ -1,9 +1,39 @@
+get_os <- function(){
+    sysinf <- Sys.info()
+    if (!is.null(sysinf)){
+        os <- sysinf['sysname']
+        if (os == 'Darwin')
+        os <- "osx"
+    } else { ## mystery machine
+        os <- .Platform$OS.type
+        if (grepl("^darwin", R.version$os))
+        os <- "osx"
+        if (grepl("linux-gnu", R.version$os))
+        os <- "linux"
+    }
+    tolower(os)
+}
+
+
+
 list.of.packages <- c("pbapply", "reshape2", "TTR", "dplyr", "ggtern", "ggplot2", "shiny", "rhandsontable", "random", "data.table", "DT", "shinythemes", "Cairo", "gghighlight")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
 
 #dyn.load(paste0(system2('/usr/libexec/java_home', stdout = TRUE), '/jre/lib/server/libjvm.dylib'))
+
+
+if("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="windows"){
+    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.zip", repos=NULL, type="win.binary")
+} else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="osx"){
+    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.tgz", repos=NULL)
+} else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="linux"){
+    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.tar.gz", repos=NULL)
+}
+
+library(rPDZ)
+
 
 
 library(pbapply)
@@ -46,7 +76,7 @@ round_df <- function(df, digits) {
 }
 
 
-Rcpp::sourceCpp("pdz.cpp")
+#Rcpp::sourceCpp("pdz.cpp")
 
 readPDZ25Data <- function(filepath, filename){
     
