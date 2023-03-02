@@ -24,7 +24,7 @@ tags$hr(),
 uiOutput('filegrab'),
 
 
-selectInput("filetype", label=NULL, c("PDZ", "CSV", "Net", "Spreadsheet"), selected="PDZ"),
+selectInput("filetype", label=NULL, c("PDZ", "CSV", "Net", "Spreadsheet"), selected="Spreadsheet"),
 
 tags$hr(),
 
