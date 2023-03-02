@@ -14,7 +14,7 @@ get_os <- function(){
     tolower(os)
 }
 
-
+tryCatch(source("~/GitHub/CloudCal/global.R", chdir=T), error=function(e) source("https://raw.githubusercontent.com/leedrake5/CloudCal/master/global.R"))
 
 list.of.packages <- c("pbapply", "reshape2", "TTR", "dplyr", "ggtern", "ggplot2", "shiny", "rhandsontable", "random", "data.table", "DT", "shinythemes", "Cairo", "gghighlight", "ggmap", "geosphere")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -63,6 +63,7 @@ library(pbapply)
 library(data.table)
 library(scales)
 
+ggmap::register_google(key = "AIzaSyDx65TUjxJnZ0AIecBaxfGqcf_fJQi764A")
 
 
 Hodder.v <- function(y){

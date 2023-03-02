@@ -601,7 +601,7 @@ shinyServer(function(input, output, session) {
             if (is.null(existingCalFile)) return(NULL)
             
             
-            Calibration <- readRDS(existingCalFile$datapath)
+            Calibration <- calRDS(existingCalFile$datapath, xgb_raw=FALSE, sort=FALSE)
             
             Calibration
             
@@ -630,7 +630,7 @@ shinyServer(function(input, output, session) {
         
         
         
-        myValData1 <- reactive({
+        myValData1_old <- reactive({
             
             data <- if(dataType()=="Spectra"){
                 fullSpectra()
@@ -648,7 +648,7 @@ shinyServer(function(input, output, session) {
         
         
         
-        calValHold1 <- reactive({
+        calValHold1_old <- reactive({
             
             
             calFileContents1()[[6]]
@@ -659,7 +659,7 @@ shinyServer(function(input, output, session) {
             
         })
         
-        calVariables1 <- reactive({
+        calVariables1_old <- reactive({
             
             
             calFileContents1()$Intensities
@@ -668,13 +668,13 @@ shinyServer(function(input, output, session) {
             
         })
         
-        calValElements1 <- reactive({
+        calValElements1_old <- reactive({
             calList <- calValHold1()
             valelements <- ls(calList)
             valelements
         })
         
-        calVariableElements1 <- reactive({
+        calVariableElements1_old <- reactive({
             variables <- calVariables1()
             variableelements <- ls(variables)
             variableelements
@@ -685,7 +685,7 @@ shinyServer(function(input, output, session) {
         
         
         
-        tableInputValCounts1 <- reactive({
+        tableInputValCounts1_old <- reactive({
             valelements <- calValElements1()
             variableelements <- calVariableElements1()
             val.data <- myValData1()
@@ -720,7 +720,7 @@ shinyServer(function(input, output, session) {
         
         
         
-        fullInputValCounts1 <- reactive({
+        fullInputValCounts1_old <- reactive({
             valelements <- calValElements1()
             variableelements <- calVariableElements1()
             val.data <- myValData1()
@@ -752,7 +752,7 @@ shinyServer(function(input, output, session) {
         
         
         
-        tableInputValQuant1 <- reactive({
+        tableInputValQuant1_old <- reactive({
             
             count.table <- data.frame(fullInputValCounts1())
             the.cal <- calValHold1()
@@ -937,8 +937,399 @@ shinyServer(function(input, output, session) {
             
         })
         
+        gainshiftHold <- reactive({0})
+        
+        fullValSpectra <- reactive({
+            
+            fullSpectraProcess(inFile=input$file1, gainshiftvalue=gainshiftHold())
+                    
+        })
+        
+        valImportedCSV <- reactive(label="importedCSV", {
+            req(input$loadvaldata)
+            
+                inFile <- input$file1
+                if (is.null(inFile)) return(NULL)
+                
+                importCSVFrame(filepath=inFile$datapath)
+        })
+        
+        readValTXT <- reactive({
+            
+            readTXTProcess(inFile=input$loadvaldata, gainshiftvalue=gainshiftHold())
+
+            
+        })
         
         
+        netValCounts <- reactive({
+            
+            withProgress(message = 'Processing Data', value = 0, {
+                
+                
+                inFile <- input$file1
+                if (is.null(inFile)) return(NULL)
+                
+                #inName <- inFile$name
+                #inPath <- inFile$datapath
+                
+                #inList <- list(inName, inPath)
+                #names(inList) <- c("inName", "inPath")
+                
+                
+                n <- length(inFile$name)
+                net.names <- gsub("\\@.*","",inFile$name)
+                
+                myfiles = pblapply(inFile$datapath,  read_csv_net)
+                
+                
+                myfiles.frame.list <- pblapply(myfiles, data.frame, stringsAsFactors=FALSE)
+                nms = unique(unlist(pblapply(myfiles.frame.list, names)))
+                myfiles.frame <- as.data.frame(do.call(rbind, lapply(myfiles.frame.list, "[", nms)))
+                myfiles.frame <- as.data.frame(sapply(myfiles.frame, as.numeric))
+                
+                
+                #myfiles.frame$Spectrum <- net.names
+                
+                united.frame <- data.frame(net.names, myfiles.frame)
+                colnames(united.frame) <- c("Spectrum", names(myfiles.frame))
+                #united.frame$None <- rep(1, length(united.frame$Spectrum))
+                
+                
+                incProgress(1/n)
+                Sys.sleep(0.1)
+            })
+            
+            united.frame <- as.data.frame(united.frame)
+            united.frame
+            
+        })
+        
+        readValElio <- reactive({
+            
+            readElioProcess(inFile=input$file1, gainshiftvalue=gainshiftHold())
+            
+            
+        })
+        
+        readValMCA <- reactive({
+            
+            readMCAProcess(inFile=input$file1, gainshiftvalue=gainshiftHold())
+            
+        })
+        
+        readValSPX <- reactive({
+            
+            readSPXProcess(inFile=input$file1, gainshiftvalue=gainshiftHold())
+            
+        })
+            
+            
+            readvalPDZ <- reactive({
+                
+            binaryshiftvalue <- tryCatch(binaryHold(), error=function(e) NULL)
+                
+            readPDZProcess(inFile=input$file1, gainshiftvalue=gainshiftHold(), advanced=input$advanced, binaryshift=binaryshiftvalue)
+                
+                
+            })
+            
+            
+
+        
+        
+        myValData <- reactive({
+            
+            data <- if(input$filetype=="CSV"){
+                fullValSpectra()
+            } else if(input$filetype=="Aggregate CSV File"){
+                valImportedCSV()
+            } else if(input$filetype=="TXT"){
+                readValTXT()
+            } else if(input$filetype=="Net"){
+                netValCounts()
+            } else if(input$filetype=="Elio") {
+                readValElio()
+            }  else if(input$filetype=="MCA") {
+                readValMCA()
+            }  else if(input$filetype=="SPX") {
+                readValSPX()
+            }  else if(input$filetype=="PDZ") {
+                readvalPDZ()
+            }
+            
+            data <- data[complete.cases(data),]
+            data
+            
+        })
+        
+        myDeconvolutedValData <- reactive({
+            
+            tryCatch(spectra_gls_deconvolute(myValData(), cores=as.numeric(my.cores)), error=function(e) spectra_gls_deconvolute(myValData(), cores=1))
+            
+        })
+        
+        calValHold <- reactive({
+            
+
+            calFileContents1()[["calList"]]
+            
+            
+            
+
+
+        })
+        
+        calVariables <- reactive({
+            
+
+                calFileContents1()$Intensities[,!colnames(calFileContents1()$Intensities) %in% "Spectrum"]
+
+            
+            
+        })
+        
+        calValElements <- reactive({
+            calList <- calValHold()
+            valelements <- names(calList)
+            
+            #valelements.simp <- gsub(".K.alpha", "", valelements)
+            #valelements.simp <- gsub(".K.beta", "", valelements.simp)
+            #valelements.simp <- gsub(".L.alpha", "", valelements.simp)
+            #valelements.simp <- gsub(".L.beta", "", valelements.simp)
+            #valelements.simp <- gsub(".M.line", "", valelements.simp)
+
+            
+            #valelements <- as.vector(as.character(valelements[match(as.character(fluorescence.lines$Symbol), valelements.simp)]))
+            
+            #valelements <- c(valelements, names(calList)[!(names(calList) %in% valelements)])
+
+            
+            order_elements(valelements)
+        })
+        
+        calVariableElements <- reactive({
+            variables <- calVariables()
+            variableelements <- names(variables)
+            
+            #variableelements.simp <- gsub(".K.alpha", "", variableelements)
+            #variableelements.simp <- gsub(".K.beta", "", variableelements)
+            #variableelements.simp <- gsub(".L.alpha", "", variableelements)
+            #variableelements.simp <- gsub(".L.beta", "", variableelements)
+            #variableelements.simp <- gsub(".M.line", "", variableelements)
+            
+            #variableelements <- as.vector(as.character(na.omit(variableelements[match(as.character(fluorescence.lines$Symbol), variableelements.simp)])))
+
+            order_elements(variableelements)
+        })
+        
+        
+        
+        calDefinitions <- reactive({
+            
+            if(!is.null(calFileContents1()[["Definitions"]])){
+                calFileContents1()[["Definitions"]]
+            } else if(is.null(calFileContents1()[["Definitions"]])){
+                NULL
+            }
+            
+        })
+        
+        valDataType <- reactive({
+            
+            if(input$filetype=="CSV"){
+                "Spectra"
+            } else if(input$filetype=="Aggregate CSV File"){
+                "Spectra"
+            } else if(input$filetype=="TXT"){
+                "Spectra"
+            } else if(input$filetype=="Net"){
+                "Net"
+            } else if(input$filetype=="Elio") {
+                "Spectra"
+            } else if(input$filetype=="SPX") {
+                "Spectra"
+            } else if(input$filetype=="MCA") {
+                "Spectra"
+            } else if(input$filetype=="PDZ") {
+                "Spectra"
+            } else if(input$filetype=="Spectra") {
+                "Spectra"
+            }
+            
+        })
+        
+        
+  
+  
+        
+        
+        tableInputValCounts <- reactive({
+            valelements <- calValElements()
+            variableelements <- calVariableElements()
+            val.data <- myValData()
+            
+            #if(valDataType()=="Spectra"){spectra.line.list <- pblapply(cl=as.numeric(my.cores)/2, X=valelements, function(x) elementGrab(element.line=x, data=val.data, range.table=calDefinitions()))}
+            #if(valDataType()=="Spectra"){element.count.list <- lapply(spectra.line.list, '[', 2)}
+            
+            
+            
+            #if(valDataType()=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+            
+            #if(valDataType()=="Spectra"){dim(spectra.line.vector) <- c(length(spectra.line.list[[1]]$Spectrum), length(valelements))}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- data.frame(spectra.line.list[[1]]$Spectrum, spectra.line.vector)}
+            
+            #if(valDataType()=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", valelements)}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame}
+            
+            #if(valDataType()=="Spectra"){val.line.table <- spectra.line.frame[, c("Spectrum", valelements), drop = FALSE]}
+            
+            if(valDataType()=="Spectra"){val.line.table <- narrowLineTable(spectra=val.data, definition.table=calFileContents2()$Definitions, elements=calVariableElements())}
+            
+            
+            if(valDataType()=="Net"){val.line.table <- val.data[c("Spectrum", valelements), drop=FALSE]}
+                
+                
+                val.line.table
+
+
+        })
+        
+        myDeconvolutedValDataList <- reactive({
+            
+            tryCatch(spectra_gls_deconvolute(myValData(), cores=as.numeric(my.cores)), error=function(e) spectra_gls_deconvolute(myValData(), cores=1))
+
+        })
+        
+        myDeconvolutedValData <- reactive({
+            
+            myDeconvolutedValDataList()$Spectra
+            
+        })
+        
+        myDeconvolutedValDataArea <- reactive({
+            
+            myDeconvolutedValDataList()$Area
+            
+        })
+        
+        lineTypePreference <- reactive({
+            
+             calFileContents1()[["LinePreference"]]
+            
+        })
+        
+        
+        fullInputValCounts <- reactive({
+            valelements <- calValElements()
+            variableelements <- calVariableElements()
+            val.data <- myValData()
+            
+            #if(valDataType()=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=val.data, range.table=calDefinitions()))}
+            #if(valDataType()=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+            
+            
+            #if(valDataType()=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+            
+            #if(valDataType()=="Spectra"){dim(spectra.line.vector) <- c(length(spectra.line.list[[1]]$Spectrum), length(variableelements))}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- data.frame(spectra.line.list[[1]]$Spectrum, spectra.line.vector)}
+            
+            #if(valDataType()=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+            
+            #if(valDataType()=="Spectra"){val.line.table <- spectra.line.frame[c("Spectrum", variableelements)]}
+            
+            if(valDataType()=="Spectra"){val.line.table <- narrowLineTable(spectra=val.data, definition.table=calFileContents2()$Definitions, elements=calVariableElements())}
+            
+            if(valDataType()=="Net"){val.line.table <- val.data}
+            
+            
+            val.line.table
+        })
+        
+        fullInputValCountsWide <- reactive({
+            valelements <- calValElements()
+            variableelements <- calVariableElements()
+            val.data <- myValData()
+            
+            #if(valDataType()=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) wideElementGrab(element.line=x, data=val.data, range.table=calDefinitions()))}
+            #if(valDataType()=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+            
+            
+            #if(valDataType()=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+            
+            #if(valDataType()=="Spectra"){dim(spectra.line.vector) <- c(length(spectra.line.list[[1]]$Spectrum), length(variableelements))}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- data.frame(spectra.line.list[[1]]$Spectrum, spectra.line.vector)}
+            
+            #if(valDataType()=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+            
+            #if(valDataType()=="Spectra"){val.line.table <- spectra.line.frame[c("Spectrum", variableelements)]}
+            
+            if(valDataType()=="Spectra"){val.line.table <- wideLineTable(spectra=val.data, definition.table=calFileContents2()$Definitions, elements=calVariableElements())}
+
+            
+            if(valDataType()=="Net"){val.line.table <- val.data}
+            
+            
+            val.line.table
+        })
+        
+        
+        fullInputValCountsDeconvoluted <- reactive({
+            valelements <- calValElements()
+            variableelements <- calVariableElements()
+            val.data <- myDeconvolutedValData()
+            
+            #if(valDataType()=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=val.data, range.table=calDefinitions()))}
+            #if(valDataType()=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+            
+            
+            #if(valDataType()=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+            
+            #if(valDataType()=="Spectra"){dim(spectra.line.vector) <- c(length(spectra.line.list[[1]]$Spectrum), length(variableelements))}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- data.frame(spectra.line.list[[1]]$Spectrum, spectra.line.vector)}
+            
+            #if(valDataType()=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+            
+            #if(valDataType()=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+            
+            #if(valDataType()=="Spectra"){val.line.table <- spectra.line.frame[c("Spectrum", variableelements)]}
+            
+            if(valDataType()=="Spectra"){val.line.table <-
+                deconvolutionIntensityFrame(myDeconvolutedValDataArea(), fullInputValCounts())}
+                            
+            if(valDataType()=="Net"){val.line.table <- val.data}
+            
+            
+            val.line.table
+        })
+        
+        
+        countList <- reactive({
+             list(Narrow=fullInputValCounts(), Wide=fullInputValCountsWide(), Area=fullInputValCountsDeconvoluted())
+        })
+        
+        
+        cloudCalPredictions <- reactive({
+            
+            cloudCalPredict(Calibration=calFileContents1(), count.list=countList(), elements.cal=calValElements(), variables=calVariableElements(), valdata=myValData(), deconvoluted_valdata=myDeconvolutedValData())
+
+            
+        })
+        
+        tableInputValQuant1 <- reactive({
+            cloudCalPredictions()
+        })
         
         
         
@@ -1086,9 +1477,7 @@ shinyServer(function(input, output, session) {
             val.line.table
         })
         
-        
-        
-        
+
         
         
         
