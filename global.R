@@ -16,7 +16,7 @@ get_os <- function(){
 
 
 
-list.of.packages <- c("pbapply", "reshape2", "TTR", "dplyr", "ggtern", "ggplot2", "shiny", "rhandsontable", "random", "data.table", "DT", "shinythemes", "Cairo", "gghighlight")
+list.of.packages <- c("pbapply", "reshape2", "TTR", "dplyr", "ggtern", "ggplot2", "shiny", "rhandsontable", "random", "data.table", "DT", "shinythemes", "Cairo", "gghighlight", "ggmap", "geosphere")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -24,15 +24,27 @@ if(length(new.packages)) install.packages(new.packages)
 #dyn.load(paste0(system2('/usr/libexec/java_home', stdout = TRUE), '/jre/lib/server/libjvm.dylib'))
 
 
-if("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="windows"){
-    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.zip", repos=NULL, type="win.binary")
-} else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="osx"){
-    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.tgz", repos=NULL)
-} else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="linux"){
-    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.tar.gz", repos=NULL)
+
+if(strsplit(strsplit(version[['version.string']], ' ')[[1]][3], '\\.')[[1]][1]=="3"){
+    if("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="windows"){
+        tryCatch(install.packages("https://github.com/leedrake5/CloudCal/blob/master/Packages/rPDZ_1.0.zip?raw=true", repos=NULL, type="win.binary"), error=function(e) NULL)
+    } else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="osx"){
+        tryCatch(install.packages("https://github.com/leedrake5/CloudCal/blob/master/Packages/rPDZ_1.0.tgz?raw=true", type="binary", repos=NULL), error=function(e) NULL)
+    } else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="linux"){
+        tryCatch(install.packages("https://github.com/leedrake5/CloudCal/blob/master/Packages/rPDZ_1.0.tar.gz?raw=true", type="source", repos=NULL), error=function(e) NULL)
+    }
+} else if(strsplit(strsplit(version[['version.string']], ' ')[[1]][3], '\\.')[[1]][1]=="4"){
+    if("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="windows"){
+        tryCatch(install.packages("https://github.com/leedrake5/CloudCal/blob/master/Packages/rPDZ_1.1.zip?raw=true", repos=NULL, type="win.binary"), error=function(e) tryCatch(remotes::install_github("leedrake5/rPDZ", subdir="rPDZ"), error=function(e) NULL))
+    } else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="osx"){
+        tryCatch(install.packages("https://github.com/leedrake5/CloudCal/blob/master/Packages/rPDZ_1.1.tgz?raw=true", type="binary", repos=NULL), error=function(e) NULL)
+    } else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="linux"){
+        tryCatch(install.packages("https://github.com/leedrake5/CloudCal/blob/master/Packages/rPDZ_1.1.tar.gz?raw=true", type="source", repos=NULL), error=function(e) NULL)
+    }
 }
 
-library(rPDZ)
+
+tryCatch(library(rPDZ), error=function(e) NULL)
 
 
 
