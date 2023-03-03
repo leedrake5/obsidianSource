@@ -63,7 +63,6 @@ library(pbapply)
 library(data.table)
 library(scales)
 
-ggmap::register_google(key = "AIzaSyDx65TUjxJnZ0AIecBaxfGqcf_fJQi764A")
 
 
 Hodder.v <- function(y){
